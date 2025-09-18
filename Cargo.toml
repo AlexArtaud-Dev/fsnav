@@ -1,0 +1,31 @@
+[package]
+name = "fsnav"
+version = "0.1.0"
+edition = "2021"
+authors = ["Alexandre Artaud <smlartaudalexandre@gmail.com>"]
+description = "A fast and intuitive terminal file system navigator with keyboard-driven interface"
+documentation = "https://docs.rs/fsnav"
+homepage = "https://github.com/AlexArtaud-Dev/fsnav"
+repository = "https://github.com/AlexArtaud-Dev/fsnav"
+readme = "README.md"
+keywords = ["cli", "terminal", "file-manager", "tui", "navigation"]
+categories = ["command-line-utilities", "filesystem"]
+license = "MIT OR Apache-2.0"
+exclude = [".github/", ".gitignore", "tests/fixtures/"]
+
+[dependencies]
+crossterm = "0.28"
+anyhow = "1.0"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+
+[[bin]]
+name = "fsnav"
+path = "src/main.rs"
+
+[badges]
+maintenance = { status = "actively-developed" }
