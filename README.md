@@ -1,8 +1,7 @@
 # fsnav - Fast Terminal File System Navigator
 
 [![Crates.io](https://img.shields.io/crates/v/fsnav.svg)](https://crates.io/crates/fsnav)
-[![Documentation](https://docs.rs/fsnav/badge.svg)](https://docs.rs/fsnav)
-[![License](https://img.shields.io/crates/l/fsnav.svg)](https://github.com/AlexArtaud-Dev/fsnav#license)
+[![CI](https://github.com/AlexArtaud-Dev/fsnav/actions/workflows/ci.yml/badge.svg)](https://github.com/AlexArtaud-Dev/fsnav/actions/workflows/ci.yml)
 
 A fast and intuitive terminal-based file system navigator written in Rust. Navigate your directories with ease using keyboard shortcuts in a clean, visual interface.
 
@@ -72,7 +71,8 @@ fsnav
 
 ## Compatibility
 
-- **Operating Systems**: Windows, macOS, Linux, BSD
+- **Operating Systems**: Linux, macOS, BSD  
+  ⚠️ Windows is not supported directly. Please use [Windows Subsystem for Linux (WSL)](https://learn.microsoft.com/windows/wsl/) for full functionality.
 - **Terminal Emulators**: All modern terminals supporting ANSI escape codes
 - **Rust Version**: 1.70.0 or later
 
@@ -108,17 +108,13 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-This project is dual-licensed under either:
+This project is licensed under :
 
-- Apache License, Version 2.0, ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
 - MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
-
-at your option.
 
 ## Acknowledgments
 
 - Built with [crossterm](https://github.com/crossterm-rs/crossterm) for terminal manipulation
-- Inspired by classic file managers like Norton Commander and Midnight Commander
 
 ## Author
 
@@ -127,7 +123,7 @@ Alexandre Artaud - [@AlexArtaud-Dev](https://github.com/AlexArtaud-Dev) - Softwa
 ## Roadmap
 
 ### v0.2.0 - Advanced Permission Manager (Root Only)
-- [ ] **Interactive chmod interface**
+- [X] **Interactive chmod interface**
   - Visual chmod builder with 3-digit selector (vertical movement for digits 0-7, horizontal for position)
   - Real-time permission explanation in plain English
   - Batch selection support with regex patterns
@@ -135,6 +131,17 @@ Alexandre Artaud - [@AlexArtaud-Dev](https://github.com/AlexArtaud-Dev) - Softwa
   - Live preview showing: `rwxrwxrwx` format with color coding
   - Permission templates (e.g., "Make executable", "Web server files", "Secure private")
   - Undo/Redo functionality for permission changes
+
+### v0.2.1 - Advanced Permission Manager (Root Only)
+- [X] **Interactive chmod interface**
+  - Officially restricting support to Unix-like systems only (Linux, macOS, BSD).
+  - Add runtime check: if running on Windows, the program exits with a clear message recommending WSL.
+  - Removing windows-latest from CI pipeline to avoid false build failures.
+  - Updating documentation to state Windows is only supported through WSL.
+
+### v0.2.2 - Advanced Permission Manager (Root Only)
+- [ ] **Interactive chmod interface**
+  - Fix chmod numbers to be centered in the selection boxes
 
 ### v0.3.0 - Ownership Manager (Root Only)
 - [ ] **Interactive chown/chgrp interface**

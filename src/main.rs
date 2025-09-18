@@ -693,6 +693,12 @@ fn run_app() -> Result<()> {
     Ok(())
 }
 
+#[cfg(windows)]
+fn main() {
+    eprintln!("❌ fsnav does not support Windows directly. Please use WSL.");
+    std::process::exit(1);
+}
+
 fn main() -> Result<()> {
     let result = run_app();
 

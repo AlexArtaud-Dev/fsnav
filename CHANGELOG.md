@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Interactive chmod interface** (root only)
   - Fix of the number to be centered in the box
 
+## [0.2.1] - 2025-09-18
+
+### Changed
+- Officially restricted support to **Unix-like systems only** (Linux, macOS, BSD).
+- Added runtime check: if running on Windows, the program exits with a clear message recommending **WSL**.
+- Removed `windows-latest` from CI pipeline to avoid false build failures.
+- Updated documentation to state Windows is only supported through **WSL**.
+
 ## [0.2.0] - 2025-09-18
 
 ### Added
