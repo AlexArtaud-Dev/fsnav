@@ -194,16 +194,6 @@ See [CHANGELOG.md](CHANGELOG.md) for a detailed list of changes between versions
 
 ## Roadmap
 
-### v0.3.0 - Ownership Manager (Root Only)
-- [ ] **Interactive chown/chgrp interface**
-    - User/Group selector with search functionality
-    - Display current ownership and proposed changes
-    - Recursive option with `-R` flag
-    - Warning system for critical system files
-    - Batch ownership changes with pattern matching
-    - Preview mode showing all affected files before applying
-    - History log of ownership changes
-
 ### v0.4.0 - Enhanced Navigation
 - [ ] Search functionality (Ctrl+F) with regex support
 - [ ] File preview panel (text, images as ASCII, file info)
@@ -229,4 +219,3 @@ See [CHANGELOG.md](CHANGELOG.md) for a detailed list of changes between versions
 - [ ] Integration with system clipboard
 - [ ] File tagging system
 - [ ] Quick actions menu (F-keys)
-

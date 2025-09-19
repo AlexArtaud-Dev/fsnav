@@ -6,7 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- Interactive chown/chgrp interface (planned for v0.3.0)
+
+## [0.3.0] - 2025-01-19
+
+### Added
+- **Interactive chown/chgrp interface** (root only)
+    - User/Group selector with search functionality
+    - Display current ownership and proposed changes
+    - Recursive option with `-R` flag support
+    - Warning system for critical system files
+    - Batch ownership changes with pattern matching (select then chown)
+    - Preview mode showing all affected files before applying
+    - Real-time filtering of users and groups
+    - Focused navigation between user and group lists
+    - Visual indicators for selected items and current focus
+    - Support for full names display alongside usernames
+    - Safe ownership change validation
+
+### Changed
+- **Enhanced root mode capabilities**:
+    - Added `o` key to open ownership manager interface
+    - Improved root user detection and privilege handling
+    - Extended keyboard shortcuts for advanced file management
+
+### Fixed
+- Improved error handling for ownership operations
+- Better system user/group parsing with `.map_while(Result::ok)`
+- Enhanced memory management for large user/group lists
 
 ## [0.2.2] - 2025-01-19
 

@@ -11,7 +11,7 @@ use std::{
     path::Path,
 };
 
-use crate::file_entry::FileEntry;
+use crate::models::FileEntry;
 use crate::navigator::NavigatorMode;
 
 pub struct RenderContext<'a> {
@@ -171,20 +171,12 @@ impl Renderer {
 
             execute!(stdout, SetForegroundColor(color), Print(&display_str))?;
 
-            // Show permissions if in select mode and root
+            // Show permissions and ownership if in select mode and root
             if *ctx.mode == NavigatorMode::Select && ctx.is_root {
                 let perms = entry.permissions_string();
-                let owner_group = format!(
-                    " {} {} {}",
-                    perms,
-                    entry.owner.as_ref().unwrap_or(&"-".to_string()),
-                    entry.group.as_ref().unwrap_or(&"-".to_string())
-                );
-                execute!(
-                    stdout,
-                    SetForegroundColor(Color::DarkGrey),
-                    Print(&owner_group)
-                )?;
+                let ownership = entry.ownership_string();
+                let info = format!(" {} {}", perms, ownership);
+                execute!(stdout, SetForegroundColor(Color::DarkGrey), Print(&info))?;
             }
 
             if is_highlighted {
@@ -196,9 +188,7 @@ impl Renderer {
                         0
                     }
                     + if *ctx.mode == NavigatorMode::Select && ctx.is_root {
-                        20 + // permissions
-                        entry.owner.as_ref().map(|o| o.len()).unwrap_or(1) + 1 +
-                        entry.group.as_ref().map(|g| g.len()).unwrap_or(1) + 1
+                        entry.permissions_string().len() + 1 + entry.ownership_string().len() + 1
                     } else {
                         0
                     };
@@ -245,10 +235,10 @@ impl Renderer {
         let controls = if is_root {
             match mode {
                 NavigatorMode::Browse => {
-                    " ↑↓:Navigate  →/Enter:Open  ←:Up  s:Select  p:Pattern  c:Chmod  S/Ctrl+D:Shell  q:Quit"
+                    " ↑↓:Navigate  →/Enter:Open  ←:Up  s:Select  p:Pattern  c:Chmod  o:Chown  S/Ctrl+D:Shell  q:Quit"
                 }
                 NavigatorMode::Select => {
-                    " ↑↓:Navigate  Space:Toggle  Enter:Confirm  c:Chmod  Esc:Cancel"
+                    " ↑↓:Navigate  Space:Toggle  Enter:Confirm  c:Chmod  o:Chown  Esc:Cancel"
                 }
                 NavigatorMode::PatternSelect => {
                     " Type pattern: 'ali*' for prefix, '.*log' for suffix, '^ali' for exact prefix | Enter:Apply | Esc:Cancel"

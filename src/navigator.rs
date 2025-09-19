@@ -3,28 +3,23 @@ use crossterm::{
     event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers},
     terminal,
 };
-use regex::Regex;
 use std::{
     collections::HashSet,
     env, fs,
     path::{Path, PathBuf},
 };
 
-use crate::file_entry::FileEntry;
-use crate::permissions::ChmodInterface;
-use crate::ui::Renderer;
-
-#[derive(Debug, Clone)]
-pub enum ExitAction {
-    Quit,
-    SpawnShell(PathBuf),
-}
+use crate::managers::{ChmodInterface, ChownInterface};
+use crate::models::{ExitAction, FileEntry};
+use crate::ui::{RenderContext, Renderer};
+use crate::utils::{get_owner_group, is_root_user, match_pattern};
 
 #[derive(Debug, PartialEq)]
 pub enum NavigatorMode {
     Browse,
     Select,
     ChmodInterface,
+    ChownInterface,
     PatternSelect,
 }
 
@@ -39,6 +34,7 @@ pub struct Navigator {
     is_root: bool,
     pattern_input: String,
     chmod_interface: Option<ChmodInterface>,
+    chown_interface: Option<ChownInterface>,
     status_message: Option<String>,
     renderer: Renderer,
 }
@@ -46,7 +42,7 @@ pub struct Navigator {
 impl Navigator {
     pub fn new() -> Result<Self> {
         let current_dir = env::current_dir().context("Failed to get current directory")?;
-        let is_root = unsafe { libc::geteuid() } == 0;
+        let is_root = is_root_user();
 
         let mut nav = Self {
             current_dir: current_dir.clone(),
@@ -59,6 +55,7 @@ impl Navigator {
             is_root,
             pattern_input: String::new(),
             chmod_interface: None,
+            chown_interface: None,
             status_message: None,
             renderer: Renderer::new(),
         };
@@ -97,13 +94,21 @@ impl Navigator {
     }
 
     fn render(&self) -> Result<()> {
-        if self.mode == NavigatorMode::ChmodInterface {
-            if let Some(ref chmod) = self.chmod_interface {
-                return chmod.render();
+        match self.mode {
+            NavigatorMode::ChmodInterface => {
+                if let Some(ref chmod) = self.chmod_interface {
+                    return chmod.render();
+                }
             }
+            NavigatorMode::ChownInterface => {
+                if let Some(ref chown) = self.chown_interface {
+                    return chown.render();
+                }
+            }
+            _ => {}
         }
 
-        let ctx = crate::ui::RenderContext {
+        let ctx = RenderContext {
             current_dir: &self.current_dir,
             entries: &self.entries,
             selected_index: self.selected_index,
@@ -143,11 +148,14 @@ impl Navigator {
                 KeyCode::Char('c') if self.is_root => {
                     self.open_chmod_interface();
                 }
-                // NEW: Ctrl+D to spawn shell in current directory
+                KeyCode::Char('o') if self.is_root => {
+                    self.open_chown_interface();
+                }
+                // Ctrl+D to spawn shell in current directory
                 KeyCode::Char('d') if modifiers.contains(KeyModifiers::CONTROL) => {
                     return Ok(Some(ExitAction::SpawnShell(self.current_dir.clone())));
                 }
-                // NEW: Shift+S to spawn shell
+                // Shift+S to spawn shell
                 KeyCode::Char('S') => {
                     return Ok(Some(ExitAction::SpawnShell(self.current_dir.clone())));
                 }
@@ -168,6 +176,9 @@ impl Navigator {
                 }
                 KeyCode::Char('c') => {
                     self.open_chmod_interface();
+                }
+                KeyCode::Char('o') => {
+                    self.open_chown_interface();
                 }
                 KeyCode::Esc => {
                     self.mode = NavigatorMode::Browse;
@@ -204,6 +215,18 @@ impl Navigator {
                     }
                 }
             }
+            NavigatorMode::ChownInterface => {
+                if let Some(ref mut chown) = self.chown_interface {
+                    if !chown.handle_input(code) {
+                        self.mode = NavigatorMode::Browse;
+                        self.chown_interface = None;
+                        self.selected_items.clear();
+                        // Reload to show updated ownership
+                        let current_dir = self.current_dir.clone();
+                        self.load_directory(&current_dir)?;
+                    }
+                }
+            }
         }
         Ok(None)
     }
@@ -226,6 +249,8 @@ impl Navigator {
                     permissions: None,
                     owner: None,
                     group: None,
+                    uid: None,
+                    gid: None,
                 });
             }
         }
@@ -255,11 +280,7 @@ impl Navigator {
                     });
 
                     // Get owner and group info
-                    let (owner, group) = if cfg!(unix) {
-                        Self::get_owner_group(&path)
-                    } else {
-                        (None, None)
-                    };
+                    let (owner, group, uid, gid) = get_owner_group(&path);
 
                     let name = entry.file_name().to_string_lossy().to_string();
 
@@ -278,6 +299,8 @@ impl Navigator {
                         permissions,
                         owner,
                         group,
+                        uid,
+                        gid,
                     };
 
                     if is_dir {
@@ -306,50 +329,14 @@ impl Navigator {
                     permissions: None,
                     owner: None,
                     group: None,
+                    uid: None,
+                    gid: None,
                 });
             }
         }
 
         self.current_dir = path.to_path_buf();
         Ok(())
-    }
-
-    fn get_owner_group(path: &Path) -> (Option<String>, Option<String>) {
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::MetadataExt;
-
-            if let Ok(metadata) = path.metadata() {
-                let uid = metadata.uid();
-                let gid = metadata.gid();
-
-                // Get username from uid
-                let owner = unsafe {
-                    let pw = libc::getpwuid(uid);
-                    if !pw.is_null() {
-                        let name = std::ffi::CStr::from_ptr((*pw).pw_name);
-                        name.to_string_lossy().to_string()
-                    } else {
-                        uid.to_string()
-                    }
-                };
-
-                // Get group name from gid
-                let group = unsafe {
-                    let gr = libc::getgrgid(gid);
-                    if !gr.is_null() {
-                        let name = std::ffi::CStr::from_ptr((*gr).gr_name);
-                        name.to_string_lossy().to_string()
-                    } else {
-                        gid.to_string()
-                    }
-                };
-
-                return (Some(owner), Some(group));
-            }
-        }
-
-        (None, None)
     }
 
     fn navigate_to_selected(&mut self) -> Result<()> {
@@ -404,45 +391,17 @@ impl Navigator {
 
         self.selected_items.clear();
 
-        // Handle different pattern types
-        if self.pattern_input.contains('*') {
-            // Simple glob pattern: "ali*" means starts with "ali"
-            let prefix = self.pattern_input.trim_end_matches('*');
-            for (i, entry) in self.entries.iter().enumerate() {
-                if entry.name != ".." && entry.name.starts_with(prefix) {
-                    self.selected_items.insert(i);
-                }
+        for (i, entry) in self.entries.iter().enumerate() {
+            if entry.name != ".." && match_pattern(&self.pattern_input, &entry.name) {
+                self.selected_items.insert(i);
             }
-            self.status_message = Some(format!(
-                "Selected {} items starting with '{}'",
-                self.selected_items.len(),
-                prefix
-            ));
-        } else if let Ok(regex) = Regex::new(&self.pattern_input) {
-            // Try as regex if no glob pattern
-            for (i, entry) in self.entries.iter().enumerate() {
-                if entry.name != ".." && regex.is_match(&entry.name) {
-                    self.selected_items.insert(i);
-                }
-            }
-            self.status_message = Some(format!(
-                "Selected {} items matching regex '{}'",
-                self.selected_items.len(),
-                self.pattern_input
-            ));
-        } else {
-            // Fall back to simple substring matching
-            for (i, entry) in self.entries.iter().enumerate() {
-                if entry.name != ".." && entry.name.contains(&self.pattern_input) {
-                    self.selected_items.insert(i);
-                }
-            }
-            self.status_message = Some(format!(
-                "Selected {} items containing '{}'",
-                self.selected_items.len(),
-                self.pattern_input
-            ));
         }
+
+        self.status_message = Some(format!(
+            "Selected {} items matching '{}'",
+            self.selected_items.len(),
+            self.pattern_input
+        ));
 
         self.pattern_input.clear();
     }
@@ -453,7 +412,34 @@ impl Navigator {
             return;
         }
 
-        let selected_paths: Vec<PathBuf> = if self.selected_items.is_empty() {
+        let selected_paths = self.get_selected_paths();
+        if selected_paths.is_empty() {
+            self.status_message = Some("No items selected for chmod".to_string());
+            return;
+        }
+
+        self.chmod_interface = Some(ChmodInterface::new(selected_paths));
+        self.mode = NavigatorMode::ChmodInterface;
+    }
+
+    fn open_chown_interface(&mut self) {
+        if !self.is_root {
+            self.status_message = Some("⚠️  Chown interface requires root privileges".to_string());
+            return;
+        }
+
+        let selected_paths = self.get_selected_paths();
+        if selected_paths.is_empty() {
+            self.status_message = Some("No items selected for chown".to_string());
+            return;
+        }
+
+        self.chown_interface = Some(ChownInterface::new(selected_paths));
+        self.mode = NavigatorMode::ChownInterface;
+    }
+
+    fn get_selected_paths(&self) -> Vec<PathBuf> {
+        if self.selected_items.is_empty() {
             // Use currently highlighted item
             if let Some(entry) = self.entries.get(self.selected_index) {
                 if entry.name != ".." {
@@ -472,15 +458,7 @@ impl Navigator {
                 .filter(|e| e.name != "..")
                 .map(|e| e.path.clone())
                 .collect()
-        };
-
-        if selected_paths.is_empty() {
-            self.status_message = Some("No items selected for chmod".to_string());
-            return;
         }
-
-        self.chmod_interface = Some(ChmodInterface::new(selected_paths));
-        self.mode = NavigatorMode::ChmodInterface;
     }
 
     fn adjust_scroll(&mut self) {

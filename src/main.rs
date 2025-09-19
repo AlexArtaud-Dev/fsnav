@@ -6,12 +6,14 @@ use crossterm::{
 };
 use std::{env, io, process::Command};
 
-mod file_entry;
+mod managers;
+mod models;
 mod navigator;
-mod permissions;
 mod ui;
+mod utils;
 
-use navigator::{ExitAction, Navigator}; // <-- Use navigator::ExitAction
+use models::ExitAction;
+use navigator::Navigator;
 
 fn run_app() -> Result<ExitAction> {
     terminal::enable_raw_mode()?;
@@ -19,7 +21,7 @@ fn run_app() -> Result<ExitAction> {
     execute!(stdout, EnterAlternateScreen, Hide)?;
 
     let mut nav = Navigator::new()?;
-    let exit_action = nav.run()?; // This is navigator::ExitAction
+    let exit_action = nav.run()?;
 
     execute!(stdout, LeaveAlternateScreen, Show)?;
     terminal::disable_raw_mode()?;
@@ -47,7 +49,7 @@ fn spawn_shell_in_directory(dir: &std::path::Path) -> Result<()> {
 
 #[cfg(windows)]
 fn main() {
-    eprintln!("⌠fsnav does not support Windows directly. Please use WSL.");
+    eprintln!("❌ fsnav does not support Windows directly. Please use WSL.");
     std::process::exit(1);
 }
 

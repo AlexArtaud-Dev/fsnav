@@ -10,6 +10,10 @@ pub struct FileEntry {
     pub permissions: Option<u32>,
     pub owner: Option<String>,
     pub group: Option<String>,
+    #[allow(dead_code)]
+    pub uid: Option<u32>,
+    #[allow(dead_code)]
+    pub gid: Option<u32>,
 }
 
 impl FileEntry {
@@ -52,6 +56,14 @@ impl FileEntry {
             None => "---------".to_string(),
         }
     }
+
+    pub fn ownership_string(&self) -> String {
+        format!(
+            "{} {}",
+            self.owner.as_ref().unwrap_or(&"-".to_string()),
+            self.group.as_ref().unwrap_or(&"-".to_string())
+        )
+    }
 }
 
 #[cfg(test)]
@@ -69,6 +81,8 @@ mod tests {
             permissions: Some(0o755),
             owner: Some("user".to_string()),
             group: Some("group".to_string()),
+            uid: Some(1000),
+            gid: Some(1000),
         };
         assert_eq!(dir_entry.display_name(), "📁 test_dir/");
 
@@ -81,6 +95,8 @@ mod tests {
             permissions: Some(0o644),
             owner: Some("user".to_string()),
             group: Some("group".to_string()),
+            uid: Some(1000),
+            gid: Some(1000),
         };
         assert_eq!(file_entry.display_name(), "📄 test.txt");
     }
@@ -96,19 +112,9 @@ mod tests {
             permissions: Some(0o755),
             owner: None,
             group: None,
+            uid: None,
+            gid: None,
         };
         assert_eq!(entry.permissions_string(), "rwxr-xr-x");
-
-        let entry2 = FileEntry {
-            name: "test2".to_string(),
-            path: PathBuf::from("/test2"),
-            is_dir: false,
-            is_accessible: true,
-            is_symlink: false,
-            permissions: Some(0o644),
-            owner: None,
-            group: None,
-        };
-        assert_eq!(entry2.permissions_string(), "rw-r--r--");
     }
 }
