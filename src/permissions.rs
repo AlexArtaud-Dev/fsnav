@@ -67,11 +67,11 @@ impl ChmodInterface {
             stdout,
             MoveTo(0, 0),
             SetForegroundColor(Color::Cyan),
-            Print("╔═══════════════════════════════════════════════════════════════════════╗"),
+            Print("╔══════════════════════════════════════════════════════════════════════╗"),
             MoveTo(0, 1),
             Print("║           INTERACTIVE CHMOD - Permission Manager                     ║"),
             MoveTo(0, 2),
-            Print("╚═══════════════════════════════════════════════════════════════════════╝"),
+            Print("╚══════════════════════════════════════════════════════════════════════╝"),
             ResetColor
         )?;
 
@@ -118,15 +118,15 @@ impl ChmodInterface {
             // Chmod selector interface
             self.render_chmod_selector(&mut stdout, 9)?;
 
-            // Permission preview
-            self.render_permission_preview(&mut stdout, 16)?;
+            // Permission preview - moved down to y + 18 to avoid overlap
+            self.render_permission_preview(&mut stdout, 18)?;
 
-            // Explanation
-            self.render_explanation(&mut stdout, 20)?;
+            // Explanation - moved down accordingly
+            self.render_explanation(&mut stdout, 22)?;
         }
 
-        // Controls
-        self.render_controls(&mut stdout, 26)?;
+        // Controls - moved down accordingly
+        self.render_controls(&mut stdout, 28)?;
 
         stdout.flush()?;
         Ok(())
@@ -221,17 +221,17 @@ impl ChmodInterface {
 
         // Render the three digit selectors with visual indicators
         for (i, digit) in self.digits.iter().enumerate() {
-            let x = 17 + (i as u16 * 12); // Adjusted for better centering
+            let base_x = 20; // Moved from 18 to 20 (2 units right)
+            let spacing = 11;
+            let x = base_x + (i as u16 * spacing);
             let is_selected = i == self.position;
 
             // Draw the selector box
-            execute!(stdout, MoveTo(x - 2, y + 3))?;
-
             if is_selected {
-                // Animated selection box
                 execute!(
                     stdout,
                     SetForegroundColor(Color::Green),
+                    MoveTo(x - 2, y + 3),
                     Print("┌───┐"),
                     MoveTo(x - 2, y + 4),
                     Print("│"),
@@ -257,7 +257,7 @@ impl ChmodInterface {
             // Draw the digit
             execute!(
                 stdout,
-                MoveTo(x, y + 4),
+                MoveTo(x - 1, y + 4),
                 if is_selected {
                     SetBackgroundColor(Color::DarkGreen)
                 } else {
@@ -273,6 +273,7 @@ impl ChmodInterface {
             )?;
         }
 
+        // Add the missing bottom border
         execute!(
             stdout,
             MoveTo(8, y + 7),

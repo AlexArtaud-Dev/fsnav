@@ -10,9 +10,12 @@ A fast and intuitive terminal-based file system navigator written in Rust. Navig
 - 🚀 **Fast Navigation**: Instant directory traversal with keyboard shortcuts
 - 📁 **Visual Indicators**: Clear distinction between files and directories
 - 🎯 **Intuitive Controls**: Arrow keys for navigation, Enter to open, Backspace to go up
-- 🌍 **Cross-Platform**: Works on Windows, macOS, and Linux
+- 🖥️ **Quick Shell Access**: Press `S` or `Ctrl+D` to open a shell in the current directory (type `exit` to return to fsnav)
+- 🔒 **Permission Manager**: Interactive chmod interface for root users
+- 🎨 **Pattern Selection**: Select multiple files using glob patterns or regex
+- 🌍 **Unix-Native**: Optimized for Linux, macOS, and BSD systems
 - ⚡ **Lightweight**: Minimal dependencies, fast startup
-- 🔒 **Safe**: Handles permission errors gracefully
+- 🔐 **Safe**: Handles permission errors gracefully
 
 ## Installation
 
@@ -41,6 +44,12 @@ fsnav
 
 ### Keyboard Shortcuts
 
+#### Global
+| Key | Action |
+|-----|--------|
+| `S` / `Ctrl+D` | Open a shell in the current directory (type `exit` to return) |
+
+#### Standard Mode
 | Key | Action |
 |-----|--------|
 | `↑` / `↓` | Navigate up/down in the file list |
@@ -48,8 +57,26 @@ fsnav
 | `←` / `Backspace` | Go to parent directory |
 | `Esc` / `q` | Quit the application |
 
+#### Root Mode (Additional Features)
+| Key | Action |
+|-----|--------|
+| `s` | Enter selection mode |
+| `Space` | Toggle selection (in selection mode) |
+| `p` | Pattern selection mode |
+| `c` | Open chmod interface |
+
+#### Chmod Interface
+| Key | Action |
+|-----|--------|
+| `←` / `→` | Navigate between permission digits |
+| `↑` / `↓` | Increment/decrement permission value |
+| `t` | Show permission templates |
+| `Enter` | Apply permissions |
+| `Esc` | Cancel without applying |
+
 ## Screenshots
 
+### Standard Navigation
 ```
 📂 /home/user/projects
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -60,6 +87,33 @@ fsnav
    📄 README.md
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ↑↓:Navigate  →/Enter:Open  ←/Backspace:Up  Esc/q:Quit
+```
+
+### Interactive Chmod Interface (Root Only)
+```
+╔══════════════════════════════════════════════════════════════════════╗
+║           INTERACTIVE CHMOD - Permission Manager                     ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+📁 Selected: 3 item(s)
+
+╭─────────────────────────────────────────────╮
+│         OWNER      GROUP      OTHERS        │
+├─────────────────────────────────────────────┤
+│           ┌───┐     ┌───┐     ┌───┐        │
+│           │ 7 │     │ 5 │     │ 5 │        │
+│           └───┘     └───┘     └───┘        │
+╰─────────────────────────────────────────────╯
+
+📊 Permission Preview:
+Owner:  R  W  X    Group:  R  ─  X    Other:  R  ─  X
+Octal: 755 (Binary: 111 101 101)
+
+💡 What this means:
+👤 Owner can: read, write, execute/enter
+👥 Group members can: read, execute/enter
+🌍 Everyone else can: read, execute/enter
+ℹ️ ✓ Standard - Safe for programs and directories
 ```
 
 ## Performance
@@ -96,6 +150,22 @@ cargo test
 cargo run
 ```
 
+## Project Structure
+
+```
+fsnav/
+├── src/
+│   ├── main.rs           # Entry point and terminal setup
+│   ├── navigator.rs      # Core navigation logic
+│   ├── file_entry.rs     # File/directory data structures
+│   ├── permissions.rs    # Chmod interface
+│   └── ui.rs            # Rendering and UI components
+├── Cargo.toml
+├── README.md
+├── CHANGELOG.md
+└── LICENSE-MIT
+```
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
@@ -108,9 +178,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-This project is licensed under :
-
-- MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+This project is licensed under the MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
 
 ## Acknowledgments
 
@@ -120,38 +188,21 @@ This project is licensed under :
 
 Alexandre Artaud - [@AlexArtaud-Dev](https://github.com/AlexArtaud-Dev) - Software Engineer
 
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for a detailed list of changes between versions.
+
 ## Roadmap
-
-### v0.2.0 - Advanced Permission Manager (Root Only)
-- [X] **Interactive chmod interface**
-  - Visual chmod builder with 3-digit selector (vertical movement for digits 0-7, horizontal for position)
-  - Real-time permission explanation in plain English
-  - Batch selection support with regex patterns
-  - Multi-select files/directories with spacebar
-  - Live preview showing: `rwxrwxrwx` format with color coding
-  - Permission templates (e.g., "Make executable", "Web server files", "Secure private")
-  - Undo/Redo functionality for permission changes
-
-### v0.2.1 - Advanced Permission Manager (Root Only)
-- [X] **Interactive chmod interface**
-  - Officially restricting support to Unix-like systems only (Linux, macOS, BSD).
-  - Add runtime check: if running on Windows, the program exits with a clear message recommending WSL.
-  - Removing windows-latest from CI pipeline to avoid false build failures.
-  - Updating documentation to state Windows is only supported through WSL.
-
-### v0.2.2 - Advanced Permission Manager (Root Only)
-- [ ] **Interactive chmod interface**
-  - Fix chmod numbers to be centered in the selection boxes
 
 ### v0.3.0 - Ownership Manager (Root Only)
 - [ ] **Interactive chown/chgrp interface**
-  - User/Group selector with search functionality
-  - Display current ownership and proposed changes
-  - Recursive option with `-Rh` flag (follows symlinks safely)
-  - Warning system for critical system files
-  - Batch ownership changes with pattern matching
-  - Preview mode showing all affected files before applying
-  - History log of ownership changes
+    - User/Group selector with search functionality
+    - Display current ownership and proposed changes
+    - Recursive option with `-R` flag
+    - Warning system for critical system files
+    - Batch ownership changes with pattern matching
+    - Preview mode showing all affected files before applying
+    - History log of ownership changes
 
 ### v0.4.0 - Enhanced Navigation
 - [ ] Search functionality (Ctrl+F) with regex support
@@ -162,7 +213,7 @@ Alexandre Artaud - [@AlexArtaud-Dev](https://github.com/AlexArtaud-Dev) - Softwa
 ### v0.5.0 - File Operations
 - [ ] Copy/Cut/Paste operations (Ctrl+C, Ctrl+X, Ctrl+V)
 - [ ] Safe delete with trash support
-- [ ] Bulk rename with pattern replacement
+- [ ] Bulk rename with pattern replacement (implement my own C program "mrename")
 - [ ] Archive creation/extraction (zip, tar, gz)
 
 ### v0.6.0 - Customization
@@ -178,3 +229,4 @@ Alexandre Artaud - [@AlexArtaud-Dev](https://github.com/AlexArtaud-Dev) - Softwa
 - [ ] Integration with system clipboard
 - [ ] File tagging system
 - [ ] Quick actions menu (F-keys)
+
