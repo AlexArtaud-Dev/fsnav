@@ -1,9 +1,9 @@
 [package]
 name = "fsnav"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 authors = ["Alexandre Artaud <smlartaudalexandre@gmail.com>"]
-description = "A fast terminal file navigator with interactive chmod/chown management for root users"
+description = "A fast terminal file navigator with advanced features: search, preview, bookmarks, and split-pane view"
 documentation = "https://docs.rs/fsnav"
 homepage = "https://github.com/AlexArtaud-Dev/fsnav"
 repository = "https://github.com/AlexArtaud-Dev/fsnav"
@@ -21,6 +21,11 @@ crossterm = "0.28"
 anyhow = "1.0"
 regex = "1.10"
 libc = "0.2"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[dev-dependencies]
+tempfile = "3.10"
 
 [profile.release]
 opt-level = 3

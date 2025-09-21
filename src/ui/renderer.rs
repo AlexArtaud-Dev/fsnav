@@ -13,6 +13,7 @@ use std::{
 
 use crate::models::FileEntry;
 use crate::navigator::NavigatorMode;
+use crate::search::SearchMode;
 
 pub struct RenderContext<'a> {
     pub current_dir: &'a Path,
@@ -25,6 +26,8 @@ pub struct RenderContext<'a> {
     pub is_root: bool,
     pub pattern_input: &'a str,
     pub status_message: &'a Option<String>,
+    pub search_mode: Option<&'a SearchMode>,
+    pub preview_focused: bool,
 }
 
 pub struct Renderer {
@@ -46,8 +49,8 @@ impl Renderer {
         // Draw header with breadcrumb
         self.render_header(&mut stdout, ctx.current_dir, ctx.is_root, terminal_width)?;
 
-        // Mode indicator
-        self.render_mode(&mut stdout, ctx.mode, ctx.pattern_input)?;
+        // Mode indicator - now includes search mode properly
+        self.render_mode(&mut stdout, ctx.mode, ctx.pattern_input, ctx.search_mode)?;
 
         // Draw file list
         self.render_file_list(&mut stdout, &ctx)?;
@@ -62,6 +65,7 @@ impl Renderer {
             &mut stdout,
             ctx.mode,
             ctx.is_root,
+            ctx.preview_focused,
             ctx.terminal_height,
             terminal_width,
         )?;
@@ -96,16 +100,31 @@ impl Renderer {
         Ok(())
     }
 
+    // In ui/renderer.rs, update the render_mode function to handle Search mode properly:
     fn render_mode(
         &self,
         stdout: &mut io::Stdout,
         mode: &NavigatorMode,
         pattern_input: &str,
+        search_mode: Option<&SearchMode>,
     ) -> Result<()> {
         let mode_text = match mode {
             NavigatorMode::Browse => "BROWSE".to_string(),
             NavigatorMode::Select => "SELECT (Space: toggle, Enter: confirm)".to_string(),
             NavigatorMode::PatternSelect => format!("PATTERN: {}_", pattern_input),
+            NavigatorMode::Search => {
+                if let Some(search) = search_mode {
+                    format!(
+                        "SEARCH: {}_  [Regex: {}] [Case: {}] [Content: {}]",
+                        search.query,
+                        if search.use_regex { "ON" } else { "OFF" },
+                        if search.case_sensitive { "ON" } else { "OFF" },
+                        if search.search_in_contents { "ON" } else { "OFF" }
+                    )
+                } else {
+                    "SEARCH: _".to_string()
+                }
+            }
             _ => String::new(),
         };
 
@@ -228,25 +247,40 @@ impl Renderer {
         stdout: &mut io::Stdout,
         mode: &NavigatorMode,
         is_root: bool,
+        preview_focused: bool,
         terminal_height: u16,
         terminal_width: u16,
     ) -> Result<()> {
         let footer_row = terminal_height - 1;
-        let controls = if is_root {
+
+        let controls = if preview_focused {
+            " ↑↓: Scroll | PageUp/Down: Page | Tab: Back to Files | Esc: Close Preview"
+        } else if is_root {
             match mode {
                 NavigatorMode::Browse => {
-                    " ↑↓:Navigate  →/Enter:Open  ←:Up  s:Select  p:Pattern  c:Chmod  o:Chown  S/Ctrl+D:Shell  q:Quit"
+                    " ↑↓: Nav | Enter: Open | Ctrl+F: Search | Ctrl+B: Bookmarks | Ctrl+P: Preview | F2: Split | S: Shell | q: Quit"
                 }
                 NavigatorMode::Select => {
-                    " ↑↓:Navigate  Space:Toggle  Enter:Confirm  c:Chmod  o:Chown  Esc:Cancel"
+                    " ↑↓: Navigate | Space: Toggle | Enter: Confirm | c: Chmod | o: Chown | Esc: Cancel"
                 }
                 NavigatorMode::PatternSelect => {
-                    " Type pattern: 'ali*' for prefix, '.*log' for suffix, '^ali' for exact prefix | Enter:Apply | Esc:Cancel"
+                    " Type pattern | Enter: Apply | Esc: Cancel"
+                }
+                NavigatorMode::Search => {
+                    " Type to search | Enter: Execute | Ctrl+R: Regex | Ctrl+C: Case | Ctrl+N/P: Next/Prev | Esc: Cancel"
                 }
                 _ => "",
             }
         } else {
-            " ↑↓:Navigate  →/Enter:Open  ←/Backspace:Up  S/Ctrl+D:Shell  Esc/q:Quit"
+            match mode {
+                NavigatorMode::Browse => {
+                    " ↑↓: Nav | Enter: Open | Ctrl+F: Search | Ctrl+B: Bookmarks | Ctrl+P: Preview | F2: Split | S: Shell | q: Quit"
+                }
+                NavigatorMode::Search => {
+                    " Type to search | Enter: Execute | Ctrl+R: Regex | Ctrl+C: Case | Ctrl+N/P: Next/Prev | Esc: Cancel"
+                }
+                _ => " ↑↓: Navigate | Enter: Open | Esc: Back",
+            }
         };
 
         execute!(
@@ -261,4 +295,5 @@ impl Renderer {
 
         Ok(())
     }
+
 }

@@ -7,6 +7,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2025-01-20
+
+### Added
+- **Search functionality** (`Ctrl+F`)
+    - Real-time file and directory search
+    - Regex support with toggle (`Ctrl+R`)
+    - Case-sensitive search toggle (`Ctrl+C`)
+    - Content search within text files (`Ctrl+G`)
+    - Navigate between results (`Ctrl+N`/`Ctrl+P`)
+    - Highlights matching files with context
+
+- **File preview panel** (`Ctrl+P`)
+    - Split-screen view with 60/40 layout
+    - Text file preview with syntax awareness
+    - Binary file hex viewer
+    - Image file information and ASCII art placeholder
+    - Directory contents preview
+    - File metadata display (size, permissions, MIME type)
+    - Scrollable preview for large files
+
+- **Bookmarks system** (`Ctrl+B`)
+    - Save frequently accessed directories
+    - Quick jump with keyboard shortcuts
+    - Auto-generated shortcuts for bookmarks
+    - Default bookmarks for common directories
+    - Persistent storage in `~/.config/fsnav/bookmarks.json`
+    - Access count tracking
+    - Import/export functionality
+    - Sort by frequency or name
+
+- **Split-pane view** (`F2`)
+    - Dual directory navigation
+    - Vertical and horizontal split modes (`F6`)
+    - Adjustable split ratio (`+`/`-`)
+    - Independent navigation in each pane
+    - Directory synchronization (`F5`)
+    - Quick pane switching (`Tab`)
+    - Selection support in both panes
+
+### Changed
+- **Command line interface**
+    - Added `-v`/`--version` flag
+    - Added `-h`/`--help` flag
+    - Support for starting directory as argument
+    - Improved help documentation
+
+- **User interface**
+    - Enhanced keyboard shortcut system
+    - Better visual feedback for different modes
+    - Improved status messages
+    - More informative error handling
+
+### Fixed
+- Preview panel memory management
+- Search result navigation accuracy
+- Bookmark shortcut conflicts
+- Split-pane rendering on terminal resize
+
+### Technical
+- Added `serde` and `serde_json` for bookmark persistence
+- Modularized codebase with new feature modules
+- Improved test coverage with unit tests
+- Better separation of concerns
+
 ## [0.3.0] - 2025-01-19
 
 ### Added
@@ -15,10 +79,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Display current ownership and proposed changes
     - Recursive option with `-R` flag support
     - Warning system for critical system files
-    - Batch ownership changes with pattern matching (select then chown)
+    - Batch ownership changes with pattern matching
     - Preview mode showing all affected files before applying
     - Real-time filtering of users and groups
-    - Focused navigation between user and group lists
     - Visual indicators for selected items and current focus
     - Support for full names display alongside usernames
     - Safe ownership change validation
@@ -59,7 +122,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Chmod interface visual improvements**:
     - Permission preview now properly positioned below chmod selector box
     - Fixed missing bottom border on chmod selector
-    - Improved number selector positioning (moved 2 units right for better alignment)
+    - Improved number selector positioning
     - Enhanced visual spacing to prevent overlapping elements
     - Better overall interface aesthetics
 
@@ -70,10 +133,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.2.1] - 2025-09-18
 
 ### Changed
-- Officially restricted support to **Unix-like systems only** (Linux, macOS, BSD).
-- Added runtime check: if running on Windows, the program exits with a clear message recommending **WSL**.
-- Removed `windows-latest` from CI pipeline to avoid false build failures.
-- Updated documentation to state Windows is only supported through **WSL**.
+- Officially restricted support to **Unix-like systems only** (Linux, macOS, BSD)
+- Added runtime check: if running on Windows, the program exits with a clear message recommending **WSL**
+- Removed `windows-latest` from CI pipeline to avoid false build failures
+- Updated documentation to state Windows is only supported through **WSL**
 
 ## [0.2.0] - 2025-09-18
 
@@ -81,36 +144,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Interactive chmod interface** (root only)
     - Visual 3-digit permission selector with real-time preview
     - Live explanation of permissions in plain English
-    - Color-coded permission display (Owner: red, Group: yellow, Others: green)
-    - Permission templates for common use cases (755, 644, 600, etc.)
-    - Security warnings for dangerous permissions (777, 666)
+    - Color-coded permission display
+    - Permission templates for common use cases
+    - Security warnings for dangerous permissions
     - Binary representation display
     - Batch permission changes for multiple files
 
 - **Selection modes**
     - Multi-select mode with Space key toggle
     - Pattern selection with regex support
-    - Visual selection indicators [✓]
+    - Visual selection indicators
     - Batch operations on selected items
 
 - **Enhanced file information**
     - Display file permissions in selection mode
     - Show owner and group information
-    - Symlink detection and visual indicator (🔗)
-    - Improved permission string display (rwxrwxrwx format)
-
-- **Root mode features**
-    - Automatic detection of root privileges
-    - Additional keyboard shortcuts (s: select, p: pattern, c: chmod)
-    - Root mode indicator in header
-    - Extended controls in footer
+    - Symlink detection and visual indicator
+    - Improved permission string display
 
 ### Changed
 - Refactored code structure with modular design
 - Improved error handling for permission operations
 - Enhanced UI with box-drawing characters
 - Better color coding for different file types
-- More informative status messages
 
 ### Fixed
 - Borrow checker issue with parent directory navigation

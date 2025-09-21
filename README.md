@@ -3,19 +3,50 @@
 [![Crates.io](https://img.shields.io/crates/v/fsnav.svg)](https://crates.io/crates/fsnav)
 [![CI](https://github.com/AlexArtaud-Dev/fsnav/actions/workflows/ci.yml/badge.svg)](https://github.com/AlexArtaud-Dev/fsnav/actions/workflows/ci.yml)
 
-A fast and intuitive terminal-based file system navigator written in Rust. Navigate your directories with ease using keyboard shortcuts in a clean, visual interface.
+A fast and intuitive terminal-based file system navigator written in Rust, featuring advanced search, file preview, bookmarks, and split-pane navigation.
+
+## 🚀 v0.4.0 - Enhanced Navigation Edition
+
+The latest release brings powerful navigation features that transform how you explore your file system:
+
+- **🔍 Smart Search**: Find files instantly with regex support and content search
+- **👁️ Live Preview**: See file contents without opening them
+- **📑 Bookmarks**: Save and jump to your favorite directories
+- **🔲 Split-Pane**: Navigate two directories simultaneously
 
 ## Features
 
+### Core Navigation
 - 🚀 **Fast Navigation**: Instant directory traversal with keyboard shortcuts
-- 📁 **Visual Indicators**: Clear distinction between files and directories
+- 🔍 **Visual Indicators**: Clear distinction between files and directories
 - 🎯 **Intuitive Controls**: Arrow keys for navigation, Enter to open, Backspace to go up
-- 🖥️ **Quick Shell Access**: Press `S` or `Ctrl+D` to open a shell in the current directory (type `exit` to return to fsnav)
-- 🔒 **Permission Manager**: Interactive chmod interface for root users
+- 🖥️ **Quick Shell Access**: Press `S` or `Ctrl+D` to open a shell in the current directory
+- 📊 **Permission Manager**: Interactive chmod/chown interface for root users
 - 🎨 **Pattern Selection**: Select multiple files using glob patterns or regex
-- 🌍 **Unix-Native**: Optimized for Linux, macOS, and BSD systems
-- ⚡ **Lightweight**: Minimal dependencies, fast startup
-- 🔐 **Safe**: Handles permission errors gracefully
+
+### New in v0.4.0
+- 🔎 **Advanced Search** (`Ctrl+F`)
+    - Real-time search as you type
+    - Regex pattern support
+    - Search within file contents
+    - Navigate between results
+
+- 📄 **File Preview Panel** (`Ctrl+P`)
+    - Split-screen preview
+    - Syntax-aware text display
+    - Binary hex viewer
+    - Directory contents preview
+
+- 📌 **Bookmarks System** (`Ctrl+B`)
+    - Save frequently accessed directories
+    - Keyboard shortcuts for quick access
+    - Persistent storage
+    - Usage tracking
+
+- 📊 **Split-Pane View** (`F2`)
+    - Dual directory navigation
+    - Vertical/horizontal layouts
+    - Independent or synchronized navigation
 
 ## Installation
 
@@ -36,105 +67,145 @@ cargo build --release
 
 ## Usage
 
-Simply run `fsnav` in your terminal:
-
 ```bash
+# Start in current directory
 fsnav
+
+# Start in specific directory
+fsnav /path/to/directory
+
+# Show help
+fsnav --help
+
+# Show version
+fsnav --version
 ```
 
-### Keyboard Shortcuts
+## Keyboard Shortcuts
 
-#### Global
+### Standard Navigation
 | Key | Action |
 |-----|--------|
-| `S` / `Ctrl+D` | Open a shell in the current directory (type `exit` to return) |
-
-#### Standard Mode
-| Key | Action |
-|-----|--------|
-| `↑` / `↓` | Navigate up/down in the file list |
+| `↑` / `↓` | Navigate up/down |
 | `→` / `Enter` | Enter selected directory |
 | `←` / `Backspace` | Go to parent directory |
-| `Esc` / `q` | Quit the application |
+| `S` / `Ctrl+D` | Open shell in current directory |
+| `Esc` / `q` | Quit application |
 
-#### Root Mode (Additional Features)
+### Search & Preview
+| Key | Action |
+|-----|--------|
+| `Ctrl+F` | Enter search mode |
+| `Ctrl+N` | Next search result |
+| `Ctrl+P` | Previous search result (in search) / Toggle preview panel |
+| `Ctrl+R` | Toggle regex mode (in search) |
+| `Ctrl+C` | Toggle case-sensitive search |
+| `Ctrl+G` | Search in file contents |
+
+### Bookmarks
+| Key | Action |
+|-----|--------|
+| `Ctrl+B` | Open bookmarks manager |
+| `Ctrl+G` | Quick jump to bookmark |
+| `a` | Add current directory (in bookmarks) |
+| `d` | Delete bookmark (in bookmarks) |
+| `r` | Rename bookmark (in bookmarks) |
+
+### Split-Pane View
+| Key | Action |
+|-----|--------|
+| `F2` | Toggle split-pane mode |
+| `Tab` | Switch between panes |
+| `F5` | Sync directories |
+| `F6` | Toggle vertical/horizontal layout |
+| `+` / `-` | Adjust split ratio |
+
+### Root Mode Features
 | Key | Action |
 |-----|--------|
 | `s` | Enter selection mode |
 | `Space` | Toggle selection (in selection mode) |
 | `p` | Pattern selection mode |
 | `c` | Open chmod interface |
-
-#### Chmod Interface
-| Key | Action |
-|-----|--------|
-| `←` / `→` | Navigate between permission digits |
-| `↑` / `↓` | Increment/decrement permission value |
-| `t` | Show permission templates |
-| `Enter` | Apply permissions |
-| `Esc` | Cancel without applying |
+| `o` | Open chown interface |
 
 ## Screenshots
 
-### Standard Navigation
+### Search Mode with Results
 ```
 📂 /home/user/projects
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   📁 ../
- > 📁 src/
-   📁 tests/
-   📄 Cargo.toml
-   📄 README.md
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-↑↓:Navigate  →/Enter:Open  ←/Backspace:Up  Esc/q:Quit
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 Search: config     [3 results]
+[Regex: OFF] [Case: OFF] [Content: OFF]
+───────────────────────────────────────
+ > 📄 config.toml ← [1/3]
+   📄 .config
+   📁 configs/
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ctrl+N/P: Next/Prev | Ctrl+R: Regex | Esc: Exit
 ```
 
-### Interactive Chmod Interface (Root Only)
+### File Preview Panel
 ```
-╔══════════════════════════════════════════════════════════════════════╗
-║           INTERACTIVE CHMOD - Permission Manager                     ║
-╚══════════════════════════════════════════════════════════════════════╝
-
-📁 Selected: 3 item(s)
-
-╭─────────────────────────────────────────────╮
-│         OWNER      GROUP      OTHERS        │
-├─────────────────────────────────────────────┤
-│           ┌───┐     ┌───┐     ┌───┐        │
-│           │ 7 │     │ 5 │     │ 5 │        │
-│           └───┘     └───┘     └───┘        │
-╰─────────────────────────────────────────────╯
-
-📊 Permission Preview:
-Owner:  R  W  X    Group:  R  ─  X    Other:  R  ─  X
-Octal: 755 (Binary: 111 101 101)
-
-💡 What this means:
-👤 Owner can: read, write, execute/enter
-👥 Group members can: read, execute/enter
-🌍 Everyone else can: read, execute/enter
-ℹ️ ✓ Standard - Safe for programs and directories
+📂 /home/user/docs          │ Preview
+━━━━━━━━━━━━━━━━━━━━━━━━━━│━━━━━━━━━━━━━━
+   📁 ../                   │ Size: 2.4 KB
+ > 📄 README.md             │ Perms: rw-r--r--
+   📄 notes.txt             │ Type: text/markdown
+   📁 images/               │ ─────────────────
+━━━━━━━━━━━━━━━━━━━━━━━━━━│ # Project Title
+↑↓: Navigate | Ctrl+P: Hide│ 
+                           │ This is a sample
+                           │ README file with
+                           │ markdown content.
 ```
+
+### Split-Pane Navigation
+```
+📂 /home/user              │ 📂 /home/user/projects
+━━━━━━━━━━━━━━━━━━━━━━━━━━│━━━━━━━━━━━━━━━━━━━━━━
+ > 📁 Documents/           │    📁 ../
+   📁 Downloads/           │  > 📁 src/
+   📁 Pictures/            │    📁 tests/
+   📁 projects/            │    📄 Cargo.toml
+━━━━━━━━━━━━━━━━━━━━━━━━━━│━━━━━━━━━━━━━━━━━━━━━━
+[Left Pane Active]         Tab: Switch | F5: Sync
+```
+
+### Bookmarks Manager
+```
+📑 BOOKMARKS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[h] Home         /home/user       (accessed 42 times)
+[d] Downloads    /home/user/Downloads (accessed 15 times)
+[p] Projects     /home/user/projects  (accessed 38 times)
+[r] Root         /                    (accessed 5 times)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Available shortcuts: a, b, c, e, f, g...
+a: Add | d: Delete | r: Rename | Esc: Back
+```
+
+## Configuration
+
+fsnav stores its configuration and bookmarks in `~/.config/fsnav/`:
+
+- `bookmarks.json` - Saved bookmarks with usage statistics
 
 ## Performance
 
-- Handles directories with thousands of files smoothly
-- Minimal memory footprint
-- Instant response to keyboard input
-- Efficient scrolling for large directories
+- **Instant Search**: Find files in milliseconds even in large directories
+- **Lazy Loading**: Preview only loads when needed
+- **Efficient Scrolling**: Smooth navigation through thousands of files
+- **Memory Efficient**: Minimal memory footprint with smart caching
 
 ## Compatibility
 
 - **Operating Systems**: Linux, macOS, BSD  
-  ⚠️ Windows is not supported directly. Please use [Windows Subsystem for Linux (WSL)](https://learn.microsoft.com/windows/wsl/) for full functionality.
+  ⚠️ Windows is not supported directly. Please use [WSL](https://learn.microsoft.com/windows/wsl/)
 - **Terminal Emulators**: All modern terminals supporting ANSI escape codes
 - **Rust Version**: 1.70.0 or later
 
 ## Building from Source
-
-Requirements:
-- Rust 1.70.0 or later
-- Cargo
 
 ```bash
 # Debug build
@@ -159,7 +230,12 @@ fsnav/
 │   ├── navigator.rs      # Core navigation logic
 │   ├── file_entry.rs     # File/directory data structures
 │   ├── permissions.rs    # Chmod interface
-│   └── ui.rs            # Rendering and UI components
+│   ├── ownership.rs      # Chown interface
+│   ├── ui.rs            # Rendering and UI components
+│   ├── search.rs        # Search functionality (v0.4.0)
+│   ├── preview.rs       # File preview system (v0.4.0)
+│   ├── bookmarks.rs     # Bookmarks manager (v0.4.0)
+│   └── split_pane.rs    # Split-pane view (v0.4.0)
 ├── Cargo.toml
 ├── README.md
 ├── CHANGELOG.md
@@ -183,6 +259,8 @@ This project is licensed under the MIT license ([LICENSE-MIT](LICENSE-MIT) or ht
 ## Acknowledgments
 
 - Built with [crossterm](https://github.com/crossterm-rs/crossterm) for terminal manipulation
+- Uses [serde](https://github.com/serde-rs/serde) for configuration serialization
+- Regex support via [regex](https://github.com/rust-lang/regex)
 
 ## Author
 
@@ -194,16 +272,16 @@ See [CHANGELOG.md](CHANGELOG.md) for a detailed list of changes between versions
 
 ## Roadmap
 
-### v0.4.0 - Enhanced Navigation
-- [ ] Search functionality (Ctrl+F) with regex support
-- [ ] File preview panel (text, images as ASCII, file info)
-- [ ] Bookmarks/favorites system (Ctrl+B to bookmark, Ctrl+G to go)
-- [ ] Split-pane view for dual directory navigation
+### ✅ v0.4.0 - Enhanced Navigation (Released!)
+- [x] Search functionality with regex support
+- [x] File preview panel
+- [x] Bookmarks/favorites system
+- [x] Split-pane view for dual directory navigation
 
-### v0.5.0 - File Operations
+### v0.5.0 - File Operations (In Progress)
 - [ ] Copy/Cut/Paste operations (Ctrl+C, Ctrl+X, Ctrl+V)
 - [ ] Safe delete with trash support
-- [ ] Bulk rename with pattern replacement (implement my own C program "mrename")
+- [ ] Bulk rename with pattern replacement
 - [ ] Archive creation/extraction (zip, tar, gz)
 
 ### v0.6.0 - Customization
@@ -215,7 +293,13 @@ See [CHANGELOG.md](CHANGELOG.md) for a detailed list of changes between versions
 ### Future Features
 - [ ] Network drive support (SMB, SSH/SFTP)
 - [ ] File filtering by extension/size/date
-- [ ] Advanced symlink visualization and management
+- [ ] Advanced symlink visualization
 - [ ] Integration with system clipboard
 - [ ] File tagging system
 - [ ] Quick actions menu (F-keys)
+- [ ] Terminal multiplexer integration
+- [ ] Git integration with status indicators
+
+## Star History
+
+If you find fsnav useful, please consider giving it a star on [GitHub](https://github.com/AlexArtaud-Dev/fsnav)!
