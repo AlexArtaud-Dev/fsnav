@@ -279,11 +279,11 @@ impl Navigator {
         width: u16,
         height: u16,
     ) -> Result<()> {
-        use crate::preview::PreviewContent;
+        use crate::preview::{FilePreview, PreviewContent};
         use crossterm::{
             cursor::MoveTo,
             execute,
-            style::{Color, Print, ResetColor, SetForegroundColor},
+            style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
         };
 
         if let Some(ref preview) = self.file_preview {
@@ -495,7 +495,7 @@ impl Navigator {
         use crossterm::{
             cursor::MoveTo,
             execute,
-            style::{Color, Print, ResetColor, SetForegroundColor},
+            style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
             terminal,
         };
         use std::io::{self, Write};
