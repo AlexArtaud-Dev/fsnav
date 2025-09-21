@@ -17,21 +17,26 @@ pub enum PreviewContent {
     Image(ImageInfo),
     Directory(Vec<String>),
     Error(String),
+    #[allow(dead_code)]
     Empty,
 }
 
 #[derive(Debug, Clone)]
 pub struct FileInfo {
     pub size: u64,
+    #[allow(dead_code)]
     pub modified: Option<std::time::SystemTime>,
     pub permissions: Option<u32>,
     pub mime_type: String,
+    #[allow(dead_code)]
     pub line_count: Option<usize>,
 }
 
 #[derive(Debug, Clone)]
 pub struct ImageInfo {
+    #[allow(dead_code)]
     pub format: String,
+    #[allow(dead_code)]
     pub dimensions: Option<(u32, u32)>,
     pub ascii_art: Option<String>,
 }
@@ -76,7 +81,8 @@ impl FilePreview {
             return "inode/directory".to_string();
         }
 
-        let ext = path.extension()
+        let ext = path
+            .extension()
             .and_then(|e| e.to_str())
             .map(|e| e.to_lowercase())
             .unwrap_or_default();
@@ -138,20 +144,24 @@ impl FilePreview {
             "mkv" => "video/x-matroska",
 
             _ => "application/octet-stream",
-        }.to_string()
+        }
+        .to_string()
     }
 
     fn preview_file(path: &Path, max_lines: usize, file_size: u64) -> Result<PreviewContent> {
         // Don't preview files larger than 10MB
         if file_size > 10 * 1024 * 1024 {
-            return Ok(PreviewContent::Error("File too large to preview".to_string()));
+            return Ok(PreviewContent::Error(
+                "File too large to preview".to_string(),
+            ));
         }
 
         let mime_type = Self::detect_mime_type(path);
 
-        if mime_type.starts_with("text/") ||
-            mime_type == "application/json" ||
-            Self::is_text_file_by_content(path)? {
+        if mime_type.starts_with("text/")
+            || mime_type == "application/json"
+            || Self::is_text_file_by_content(path)?
+        {
             Self::preview_text_file(path, max_lines)
         } else if mime_type.starts_with("image/") {
             Self::preview_image_file(path)
@@ -166,12 +176,12 @@ impl FilePreview {
         let bytes_read = file.read(&mut buffer)?;
 
         // Check if file contains null bytes (binary indicator)
-        for i in 0..bytes_read {
-            if buffer[i] == 0 {
+        for &b in buffer.iter().take(bytes_read) {
+            if b == 0 {
                 return Ok(false);
             }
             // Check for other non-text bytes
-            if buffer[i] < 0x20 && !matches!(buffer[i], 0x09 | 0x0A | 0x0D) {
+            if b < 0x20 && !matches!(b, 0x09 | 0x0A | 0x0D) {
                 return Ok(false);
             }
         }
@@ -183,7 +193,7 @@ impl FilePreview {
         let file = File::open(path)?;
         let reader = BufReader::new(file);
         let mut lines = Vec::new();
-        let mut line_count = 0;
+        let mut _line_count = 0;
 
         for line_result in reader.lines().take(max_lines) {
             match line_result {
@@ -191,7 +201,7 @@ impl FilePreview {
                     // Replace tabs with spaces for better display
                     let line = line.replace('\t', "    ");
                     lines.push(line);
-                    line_count += 1;
+                    _line_count += 1;
                 }
                 Err(_) => {
                     // Not a valid UTF-8 file
@@ -213,7 +223,8 @@ impl FilePreview {
     }
 
     fn preview_image_file(path: &Path) -> Result<PreviewContent> {
-        let ext = path.extension()
+        let ext = path
+            .extension()
             .and_then(|e| e.to_str())
             .unwrap_or("")
             .to_lowercase();
@@ -268,7 +279,11 @@ impl FilePreview {
                 }
 
                 let file_name = entry.file_name().to_string_lossy().to_string();
-                let file_type = if entry.path().is_dir() { "📁" } else { "📄" };
+                let file_type = if entry.path().is_dir() {
+                    "📁"
+                } else {
+                    "📄"
+                };
 
                 entries.push(format!("{} {}", file_type, file_name));
                 count += 1;
@@ -338,11 +353,26 @@ mod tests {
 
     #[test]
     fn test_mime_type_detection() {
-        assert_eq!(FilePreview::detect_mime_type(Path::new("test.txt")), "text/plain");
-        assert_eq!(FilePreview::detect_mime_type(Path::new("code.rs")), "text/x-rust");
-        assert_eq!(FilePreview::detect_mime_type(Path::new("image.png")), "image/png");
-        assert_eq!(FilePreview::detect_mime_type(Path::new("archive.zip")), "application/zip");
-        assert_eq!(FilePreview::detect_mime_type(Path::new("unknown.xyz")), "application/octet-stream");
+        assert_eq!(
+            FilePreview::detect_mime_type(Path::new("test.txt")),
+            "text/plain"
+        );
+        assert_eq!(
+            FilePreview::detect_mime_type(Path::new("code.rs")),
+            "text/x-rust"
+        );
+        assert_eq!(
+            FilePreview::detect_mime_type(Path::new("image.png")),
+            "image/png"
+        );
+        assert_eq!(
+            FilePreview::detect_mime_type(Path::new("archive.zip")),
+            "application/zip"
+        );
+        assert_eq!(
+            FilePreview::detect_mime_type(Path::new("unknown.xyz")),
+            "application/octet-stream"
+        );
     }
 
     #[test]

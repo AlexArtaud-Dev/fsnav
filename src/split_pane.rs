@@ -192,6 +192,7 @@ impl Pane {
         }
     }
 
+    #[allow(dead_code)]
     pub fn get_selected_paths(&self) -> Vec<PathBuf> {
         if self.selected_items.is_empty() {
             if let Some(entry) = self.entries.get(self.selected_index) {
@@ -327,12 +328,12 @@ impl SplitPaneView {
         // Render divider
         for y in 0..height - 2 {
             execute!(
-            stdout,
-            MoveTo(split_pos, y),
-            SetForegroundColor(Color::DarkGrey),
-            Print("│"),
-            ResetColor
-        )?;
+                stdout,
+                MoveTo(split_pos, y),
+                SetForegroundColor(Color::DarkGrey),
+                Print("│"),
+                ResetColor
+            )?;
         }
 
         // Render right pane
@@ -372,12 +373,12 @@ impl SplitPaneView {
 
         // Render divider
         execute!(
-        stdout,
-        MoveTo(0, split_pos),
-        SetForegroundColor(Color::DarkGrey),
-        Print("─".repeat(width as usize)),
-        ResetColor
-    )?;
+            stdout,
+            MoveTo(0, split_pos),
+            SetForegroundColor(Color::DarkGrey),
+            Print("─".repeat(width as usize)),
+            ResetColor
+        )?;
 
         // Render bottom pane
         Self::render_pane(
@@ -416,14 +417,15 @@ impl SplitPaneView {
             SetForegroundColor(Color::White),
             Print(format!(
                 " {} ",
-                pane.current_dir.to_string_lossy()
+                pane.current_dir
+                    .to_string_lossy()
                     .chars()
                     .take((width - 2) as usize)
                     .collect::<String>()
             )),
-            Print(" ".repeat((width as usize).saturating_sub(
-                pane.current_dir.to_string_lossy().len() + 2
-            ))),
+            Print(" ".repeat(
+                (width as usize).saturating_sub(pane.current_dir.to_string_lossy().len() + 2)
+            )),
             ResetColor
         )?;
 
@@ -433,7 +435,10 @@ impl SplitPaneView {
 
         let end_index = (pane.scroll_offset + list_height).min(pane.entries.len());
 
-        for (i, entry) in pane.entries[pane.scroll_offset..end_index].iter().enumerate() {
+        for (i, entry) in pane.entries[pane.scroll_offset..end_index]
+            .iter()
+            .enumerate()
+        {
             let row = y + 1 + i as u16;
             let display_index = pane.scroll_offset + i;
             let is_selected = pane.selected_items.contains(&display_index);
@@ -471,9 +476,8 @@ impl SplitPaneView {
             )?;
 
             if is_highlighted {
-                let padding = (width as usize).saturating_sub(
-                    prefix.len() + marker.len() + truncated_name.len() + 1
-                );
+                let padding = (width as usize)
+                    .saturating_sub(prefix.len() + marker.len() + truncated_name.len() + 1);
                 execute!(stdout, Print(" ".repeat(padding)))?;
             }
 
@@ -483,15 +487,8 @@ impl SplitPaneView {
         Ok(())
     }
 
-    fn render_status_bar(
-        &self,
-        stdout: &mut io::Stdout,
-        width: u16,
-        height: u16,
-    ) -> Result<()> {
-        let status = format!(
-            " Tab: Switch Pane | F5: Sync Dirs | F6: Toggle Layout | +/-: Adjust Split | q: Quit"
-        );
+    fn render_status_bar(&self, stdout: &mut io::Stdout, width: u16, height: u16) -> Result<()> {
+        let status = " Tab: Switch Pane | F5: Sync Dirs | F6: Toggle Layout | +/-: Adjust Split | q: Quit";
 
         execute!(
             stdout,

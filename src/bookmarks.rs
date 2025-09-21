@@ -59,70 +59,38 @@ impl BookmarksManager {
     fn create_default_bookmarks(&mut self) {
         // Add common directories as default bookmarks
         if let Some(home) = dirs::home_dir() {
-            self.add_bookmark_internal(
-                "Home".to_string(),
-                home.clone(),
-                Some('h'),
-            );
+            self.add_bookmark_internal("Home".to_string(), home.clone(), Some('h'));
 
             let downloads = home.join("Downloads");
             if downloads.exists() {
-                self.add_bookmark_internal(
-                    "Downloads".to_string(),
-                    downloads,
-                    Some('d'),
-                );
+                self.add_bookmark_internal("Downloads".to_string(), downloads, Some('d'));
             }
 
             let documents = home.join("Documents");
             if documents.exists() {
-                self.add_bookmark_internal(
-                    "Documents".to_string(),
-                    documents,
-                    Some('o'),
-                );
+                self.add_bookmark_internal("Documents".to_string(), documents, Some('o'));
             }
 
             let desktop = home.join("Desktop");
             if desktop.exists() {
-                self.add_bookmark_internal(
-                    "Desktop".to_string(),
-                    desktop,
-                    Some('k'),
-                );
+                self.add_bookmark_internal("Desktop".to_string(), desktop, Some('k'));
             }
         }
 
         // Add root directory
-        self.add_bookmark_internal(
-            "Root".to_string(),
-            PathBuf::from("/"),
-            Some('r'),
-        );
+        self.add_bookmark_internal("Root".to_string(), PathBuf::from("/"), Some('r'));
 
         // Add common system directories
         if Path::new("/usr/local").exists() {
-            self.add_bookmark_internal(
-                "Local".to_string(),
-                PathBuf::from("/usr/local"),
-                Some('l'),
-            );
+            self.add_bookmark_internal("Local".to_string(), PathBuf::from("/usr/local"), Some('l'));
         }
 
         if Path::new("/etc").exists() {
-            self.add_bookmark_internal(
-                "Config".to_string(),
-                PathBuf::from("/etc"),
-                Some('e'),
-            );
+            self.add_bookmark_internal("Config".to_string(), PathBuf::from("/etc"), Some('e'));
         }
 
         if Path::new("/tmp").exists() {
-            self.add_bookmark_internal(
-                "Temp".to_string(),
-                PathBuf::from("/tmp"),
-                Some('t'),
-            );
+            self.add_bookmark_internal("Temp".to_string(), PathBuf::from("/tmp"), Some('t'));
         }
     }
 
@@ -144,7 +112,12 @@ impl BookmarksManager {
         }
     }
 
-    pub fn add_bookmark(&mut self, name: String, path: PathBuf, shortcut: Option<char>) -> Result<()> {
+    pub fn add_bookmark(
+        &mut self,
+        name: String,
+        path: PathBuf,
+        shortcut: Option<char>,
+    ) -> Result<()> {
         // Check if path exists
         if !path.exists() {
             return Err(anyhow::anyhow!("Path does not exist: {}", path.display()));
@@ -180,14 +153,10 @@ impl BookmarksManager {
         }
 
         // Update shortcut indices for remaining bookmarks
-        self.shortcuts = self.shortcuts.iter()
-            .map(|(&k, &v)| {
-                if v > index {
-                    (k, v - 1)
-                } else {
-                    (k, v)
-                }
-            })
+        self.shortcuts = self
+            .shortcuts
+            .iter()
+            .map(|(&k, &v)| if v > index { (k, v - 1) } else { (k, v) })
             .collect();
 
         self.save()?;
@@ -204,6 +173,7 @@ impl BookmarksManager {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn update_shortcut(&mut self, index: usize, new_shortcut: Option<char>) -> Result<()> {
         if index >= self.bookmarks.len() {
             return Err(anyhow::anyhow!("Invalid bookmark index"));
@@ -253,12 +223,15 @@ impl BookmarksManager {
         &self.bookmarks
     }
 
+    #[allow(dead_code)]
     pub fn find_bookmark_by_path(&self, path: &Path) -> Option<usize> {
         self.bookmarks.iter().position(|b| b.path == path)
     }
 
+    #[allow(dead_code)]
     pub fn sort_by_frequency(&mut self) {
-        self.bookmarks.sort_by(|a, b| b.access_count.cmp(&a.access_count));
+        self.bookmarks
+            .sort_by(|a, b| b.access_count.cmp(&a.access_count));
 
         // Rebuild shortcuts map
         self.shortcuts.clear();
@@ -271,6 +244,7 @@ impl BookmarksManager {
         let _ = self.save();
     }
 
+    #[allow(dead_code)]
     pub fn sort_by_name(&mut self) {
         self.bookmarks.sort_by(|a, b| a.name.cmp(&b.name));
 
@@ -328,6 +302,7 @@ impl BookmarksManager {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn export_to_file(&self, path: &Path) -> Result<()> {
         let data = SavedBookmarks {
             version: 1,
@@ -339,6 +314,7 @@ impl BookmarksManager {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn import_from_file(&mut self, path: &Path) -> Result<()> {
         let content = fs::read_to_string(path)?;
         let data: SavedBookmarks = serde_json::from_str(&content)?;
@@ -410,11 +386,9 @@ mod tests {
         let test_path = temp_dir.path().join("test");
         fs::create_dir(&test_path).unwrap();
 
-        manager.add_bookmark(
-            "Test".to_string(),
-            test_path.clone(),
-            Some('x')
-        ).unwrap();
+        manager
+            .add_bookmark("Test".to_string(), test_path.clone(), Some('x'))
+            .unwrap();
 
         // Test finding by shortcut
         assert!(manager.get_bookmark_by_shortcut('x').is_some());
@@ -440,7 +414,9 @@ mod tests {
         fs::create_dir(&path1).unwrap();
         fs::create_dir(&path2).unwrap();
 
-        manager.add_bookmark("Test1".to_string(), path1, Some('x')).unwrap();
+        manager
+            .add_bookmark("Test1".to_string(), path1, Some('x'))
+            .unwrap();
 
         // Should fail due to shortcut conflict
         let result = manager.add_bookmark("Test2".to_string(), path2, Some('x'));

@@ -1,4 +1,13 @@
+use crate::bookmarks::BookmarksManager;
+use crate::managers::{ChmodInterface, ChownInterface};
+use crate::models::{ExitAction, FileEntry};
+use crate::preview::FilePreview;
+use crate::search::SearchMode;
+use crate::split_pane::SplitPaneView;
+use crate::ui::{RenderContext, Renderer};
+use crate::utils::{get_owner_group, is_root_user, match_pattern};
 use anyhow::{Context, Result};
+use crossterm::style::SetBackgroundColor;
 use crossterm::{
     event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers},
     terminal,
@@ -8,15 +17,6 @@ use std::{
     env, fs,
     path::{Path, PathBuf},
 };
-use crossterm::style::SetBackgroundColor;
-use crate::bookmarks::BookmarksManager;
-use crate::managers::{ChmodInterface, ChownInterface};
-use crate::models::{ExitAction, FileEntry};
-use crate::preview::FilePreview;
-use crate::search::SearchMode;
-use crate::split_pane::SplitPaneView;
-use crate::ui::{RenderContext, Renderer};
-use crate::utils::{get_owner_group, is_root_user, match_pattern};
 
 #[derive(Debug, PartialEq)]
 pub enum NavigatorMode {
@@ -26,6 +26,7 @@ pub enum NavigatorMode {
     ChownInterface,
     PatternSelect,
     Search,
+    #[allow(dead_code)]
     Preview,
     Bookmarks,
     SplitPane,
@@ -83,8 +84,8 @@ impl Navigator {
             bookmarks_manager,
             split_pane_view: None,
             show_preview_panel: false,
-            bookmark_selected_index: None,  // Initialize new field
-            preview_focused: false,  // Initialize new field
+            bookmark_selected_index: None, // Initialize new field
+            preview_focused: false,        // Initialize new field
             bookmark_rename_mode: false,
             bookmark_rename_input: "".to_string(),
         };
@@ -108,11 +109,11 @@ impl Navigator {
             // Handle input
             if event::poll(std::time::Duration::from_millis(100))? {
                 if let Event::Key(KeyEvent {
-                                      code,
-                                      modifiers,
-                                      kind: KeyEventKind::Press,
-                                      ..
-                                  }) = event::read()?
+                    code,
+                    modifiers,
+                    kind: KeyEventKind::Press,
+                    ..
+                }) = event::read()?
                 {
                     if let Some(action) = self.handle_input(code, modifiers)? {
                         return Ok(action);
@@ -161,7 +162,7 @@ impl Navigator {
                 is_root: self.is_root,
                 pattern_input: &self.pattern_input,
                 status_message: &self.status_message,
-                search_mode: self.search_mode.as_ref(),  // Pass the search mode
+                search_mode: self.search_mode.as_ref(), // Pass the search mode
                 preview_focused: self.preview_focused,  // Pass the preview focus state
             };
             self.renderer.render(ctx)
@@ -169,7 +170,11 @@ impl Navigator {
     }
 
     fn render_with_preview(&mut self) -> Result<()> {
-        use crossterm::{cursor::MoveTo, execute, style::{Color, Print, ResetColor, SetForegroundColor}};
+        use crossterm::{
+            cursor::MoveTo,
+            execute,
+            style::{Color, Print, ResetColor, SetForegroundColor},
+        };
         use std::io::{self, Write};
 
         let mut stdout = io::stdout();
@@ -201,12 +206,12 @@ impl Navigator {
         // Draw vertical divider
         for y in 0..terminal_height - 1 {
             execute!(
-            stdout,
-            MoveTo(split_pos, y),
-            SetForegroundColor(Color::DarkGrey),
-            Print("│"),
-            ResetColor
-        )?;
+                stdout,
+                MoveTo(split_pos, y),
+                SetForegroundColor(Color::DarkGrey),
+                Print("│"),
+                ResetColor
+            )?;
         }
 
         // Update preview based on current selection (skip directories)
@@ -227,32 +232,38 @@ impl Navigator {
             if entry.is_dir {
                 // Show directory message
                 execute!(
-                stdout,
-                MoveTo(split_pos + 1, 0),
-                SetBackgroundColor(Color::DarkBlue),
-                SetForegroundColor(Color::White),
-                Print(" Preview "),
-                Print(" ".repeat((preview_width - 9) as usize)),
-                ResetColor
-            )?;
+                    stdout,
+                    MoveTo(split_pos + 1, 0),
+                    SetBackgroundColor(Color::DarkBlue),
+                    SetForegroundColor(Color::White),
+                    Print(" Preview "),
+                    Print(" ".repeat((preview_width - 9) as usize)),
+                    ResetColor
+                )?;
 
                 execute!(
-                stdout,
-                MoveTo(split_pos + 2, terminal_height / 2),
-                SetForegroundColor(Color::DarkGrey),
-                Print("  Directory preview not available"),
-                ResetColor
-            )?;
+                    stdout,
+                    MoveTo(split_pos + 2, terminal_height / 2),
+                    SetForegroundColor(Color::DarkGrey),
+                    Print("  Directory preview not available"),
+                    ResetColor
+                )?;
 
                 execute!(
-                stdout,
-                MoveTo(split_pos + 2, terminal_height / 2 + 1),
-                SetForegroundColor(Color::DarkGrey),
-                Print("  Press Enter to navigate into it"),
-                ResetColor
-            )?;
+                    stdout,
+                    MoveTo(split_pos + 2, terminal_height / 2 + 1),
+                    SetForegroundColor(Color::DarkGrey),
+                    Print("  Press Enter to navigate into it"),
+                    ResetColor
+                )?;
             } else if self.file_preview.is_some() {
-                self.render_preview_panel(&mut stdout, split_pos + 1, 0, preview_width, terminal_height - 1)?;
+                self.render_preview_panel(
+                    &mut stdout,
+                    split_pos + 1,
+                    0,
+                    preview_width,
+                    terminal_height - 1,
+                )?;
             }
         }
 
@@ -268,56 +279,67 @@ impl Navigator {
         width: u16,
         height: u16,
     ) -> Result<()> {
-        use crossterm::{cursor::MoveTo, execute, style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor}};
-        use crate::preview::{PreviewContent, FilePreview};
+        use crate::preview::{FilePreview, PreviewContent};
+        use crossterm::{
+            cursor::MoveTo,
+            execute,
+            style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
+        };
 
         if let Some(ref preview) = self.file_preview {
             // Header with file info
             execute!(
-            stdout,
-            MoveTo(x, y),
-            SetBackgroundColor(if self.preview_focused { Color::Blue } else { Color::DarkBlue }),
-            SetForegroundColor(Color::White),
-            Print(" Preview "),
-            Print(" ".repeat((width - 9) as usize)),
-            ResetColor
-        )?;
+                stdout,
+                MoveTo(x, y),
+                SetBackgroundColor(if self.preview_focused {
+                    Color::Blue
+                } else {
+                    Color::DarkBlue
+                }),
+                SetForegroundColor(Color::White),
+                Print(" Preview "),
+                Print(" ".repeat((width - 9) as usize)),
+                ResetColor
+            )?;
 
             // File info - all aligned to x + 1
             execute!(
-            stdout,
-            MoveTo(x + 1, y + 1),
-            SetForegroundColor(Color::Yellow),
-            Print(format!("Size: {}", FilePreview::format_size(preview.file_info.size))),
-            ResetColor
-        )?;
+                stdout,
+                MoveTo(x + 1, y + 1),
+                SetForegroundColor(Color::Yellow),
+                Print(format!(
+                    "Size: {}",
+                    FilePreview::format_size(preview.file_info.size)
+                )),
+                ResetColor
+            )?;
 
             if let Some(perms) = preview.file_info.permissions {
                 execute!(
-                stdout,
-                MoveTo(x + 1, y + 2),
-                SetForegroundColor(Color::Cyan),
-                Print(format!("Perms: {}", FilePreview::format_permissions(perms))),
-                ResetColor
-            )?;
+                    stdout,
+                    MoveTo(x + 1, y + 2),
+                    SetForegroundColor(Color::Cyan),
+                    Print(format!("Perms: {}", FilePreview::format_permissions(perms))),
+                    ResetColor
+                )?;
             }
 
             execute!(
-            stdout,
-            MoveTo(x + 1, y + 3),
-            SetForegroundColor(Color::Green),
-            Print(format!("Type: {}", preview.file_info.mime_type)),
-            ResetColor
-        )?;
+                stdout,
+                MoveTo(x + 1, y + 3),
+                SetForegroundColor(Color::Green),
+                Print(format!("Type: {}", preview.file_info.mime_type)),
+                ResetColor
+            )?;
 
             // Divider line
             execute!(
-            stdout,
-            MoveTo(x + 1, y + 4),
-            SetForegroundColor(Color::DarkGrey),
-            Print("─".repeat((width - 2) as usize)),
-            ResetColor
-        )?;
+                stdout,
+                MoveTo(x + 1, y + 4),
+                SetForegroundColor(Color::DarkGrey),
+                Print("─".repeat((width - 2) as usize)),
+                ResetColor
+            )?;
 
             // Content preview
             let content_start = y + 5;
@@ -325,7 +347,8 @@ impl Navigator {
 
             match &preview.content {
                 PreviewContent::Text(lines) => {
-                    for (i, line) in lines.iter()
+                    for (i, line) in lines
+                        .iter()
                         .skip(preview.scroll_offset)
                         .take(content_height as usize)
                         .enumerate()
@@ -336,24 +359,28 @@ impl Navigator {
                         // Highlight current line if preview is focused
                         if self.preview_focused && i == 0 {
                             execute!(
-                            stdout,
-                            MoveTo(x + 1, row),
-                            SetBackgroundColor(Color::DarkGreen),
-                            SetForegroundColor(Color::White),
-                            Print(" ".repeat((width - 2) as usize)),
-                            MoveTo(x + 1, row)
-                        )?;
+                                stdout,
+                                MoveTo(x + 1, row),
+                                SetBackgroundColor(Color::DarkGreen),
+                                SetForegroundColor(Color::White),
+                                Print(" ".repeat((width - 2) as usize)),
+                                MoveTo(x + 1, row)
+                            )?;
                         }
 
                         // Line number
                         execute!(
-                        stdout,
-                        MoveTo(x + 1, row),
-                        SetForegroundColor(Color::DarkGrey),
-                        Print(format!("{:4} ", line_num)),
-                        SetForegroundColor(if self.preview_focused && i == 0 { Color::White } else { Color::Reset }),
-                        ResetColor
-                    )?;
+                            stdout,
+                            MoveTo(x + 1, row),
+                            SetForegroundColor(Color::DarkGrey),
+                            Print(format!("{:4} ", line_num)),
+                            SetForegroundColor(if self.preview_focused && i == 0 {
+                                Color::White
+                            } else {
+                                Color::Reset
+                            }),
+                            ResetColor
+                        )?;
 
                         // Line content
                         let line_start_pos = x + 6;
@@ -365,91 +392,98 @@ impl Navigator {
                         };
 
                         execute!(
-                        stdout,
-                        MoveTo(line_start_pos, row),
-                        if self.preview_focused && i == 0 {
-                            SetBackgroundColor(Color::DarkGreen)
-                        } else {
-                            SetBackgroundColor(Color::Reset)
-                        },
-                        Print(truncated),
-                        ResetColor
-                    )?;
+                            stdout,
+                            MoveTo(line_start_pos, row),
+                            if self.preview_focused && i == 0 {
+                                SetBackgroundColor(Color::DarkGreen)
+                            } else {
+                                SetBackgroundColor(Color::Reset)
+                            },
+                            Print(truncated),
+                            ResetColor
+                        )?;
                     }
                 }
                 PreviewContent::Binary(bytes) => {
                     execute!(
-                    stdout,
-                    MoveTo(x + 1, content_start),
-                    SetForegroundColor(Color::DarkGrey),
-                    Print("Binary file - Hex preview:"),
-                    ResetColor
-                )?;
+                        stdout,
+                        MoveTo(x + 1, content_start),
+                        SetForegroundColor(Color::DarkGrey),
+                        Print("Binary file - Hex preview:"),
+                        ResetColor
+                    )?;
 
-                    for (i, chunk) in bytes.chunks(16).enumerate().take((content_height - 2) as usize) {
-                        let hex = chunk.iter()
+                    for (i, chunk) in bytes
+                        .chunks(16)
+                        .enumerate()
+                        .take((content_height - 2) as usize)
+                    {
+                        let hex = chunk
+                            .iter()
                             .map(|b| format!("{:02x} ", b))
                             .collect::<String>();
-                        let ascii = chunk.iter()
+                        let ascii = chunk
+                            .iter()
                             .map(|&b| if b.is_ascii_graphic() { b as char } else { '.' })
                             .collect::<String>();
 
                         execute!(
-                        stdout,
-                        MoveTo(x + 1, content_start + 2 + i as u16),
-                        SetForegroundColor(Color::Blue),
-                        Print(hex),
-                        SetForegroundColor(Color::Green),
-                        Print(" | "),
-                        SetForegroundColor(Color::White),
-                        Print(ascii),
-                        ResetColor
-                    )?;
+                            stdout,
+                            MoveTo(x + 1, content_start + 2 + i as u16),
+                            SetForegroundColor(Color::Blue),
+                            Print(hex),
+                            SetForegroundColor(Color::Green),
+                            Print(" | "),
+                            SetForegroundColor(Color::White),
+                            Print(ascii),
+                            ResetColor
+                        )?;
                     }
                 }
                 PreviewContent::Image(info) => {
                     if let Some(ref art) = info.ascii_art {
                         for (i, line) in art.lines().enumerate().take(content_height as usize) {
                             execute!(
-                            stdout,
-                            MoveTo(x + 1, content_start + i as u16),
-                            SetForegroundColor(Color::Magenta),
-                            Print(line),
-                            ResetColor
-                        )?;
+                                stdout,
+                                MoveTo(x + 1, content_start + i as u16),
+                                SetForegroundColor(Color::Magenta),
+                                Print(line),
+                                ResetColor
+                            )?;
                         }
                     }
                 }
                 PreviewContent::Directory(entries) => {
-                    for (i, entry) in entries.iter()
+                    for (i, entry) in entries
+                        .iter()
                         .skip(preview.scroll_offset)
                         .take(content_height as usize)
                         .enumerate()
                     {
                         execute!(
-                        stdout,
-                        MoveTo(x + 1, content_start + i as u16),
-                        Print(entry)
-                    )?;
+                            stdout,
+                            MoveTo(x + 1, content_start + i as u16),
+                            Print(entry)
+                        )?;
                     }
                 }
                 PreviewContent::Error(msg) => {
                     execute!(
-                    stdout,
-                    MoveTo(x + 1, content_start),
-                    SetForegroundColor(Color::Red),
-                    Print(msg),
-                    ResetColor
-                )?;
+                        stdout,
+                        MoveTo(x + 1, content_start),
+                        SetForegroundColor(Color::Red),
+                        Print(msg),
+                        ResetColor
+                    )?;
                 }
                 PreviewContent::Empty => {
                     execute!(
-                    stdout,
-                    MoveTo(x + 1, content_start),
-                    SetForegroundColor(Color::DarkGrey),
-                    Print("(empty file)"),
-                    ResetColor
-                )?;
+                        stdout,
+                        MoveTo(x + 1, content_start),
+                        SetForegroundColor(Color::DarkGrey),
+                        Print("(empty file)"),
+                        ResetColor
+                    )?;
                 }
             }
         }
@@ -458,7 +492,12 @@ impl Navigator {
     }
 
     fn render_bookmarks_interface(&self) -> Result<()> {
-        use crossterm::{cursor::MoveTo, execute, style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor}, terminal};
+        use crossterm::{
+            cursor::MoveTo,
+            execute,
+            style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
+            terminal,
+        };
         use std::io::{self, Write};
 
         let mut stdout = io::stdout();
@@ -468,35 +507,42 @@ impl Navigator {
 
         // Title
         execute!(
-        stdout,
-        MoveTo(0, 0),
-        SetBackgroundColor(Color::DarkBlue),
-        SetForegroundColor(Color::White),
-        Print(" 📑 BOOKMARKS "),
-        Print(" ".repeat((terminal_width - 14) as usize)),
-        ResetColor
-    )?;
+            stdout,
+            MoveTo(0, 0),
+            SetBackgroundColor(Color::DarkBlue),
+            SetForegroundColor(Color::White),
+            Print(" 📑 BOOKMARKS "),
+            Print(" ".repeat((terminal_width - 14) as usize)),
+            ResetColor
+        )?;
 
         // Instructions
         execute!(
-        stdout,
-        MoveTo(2, 2),
-        SetForegroundColor(Color::Yellow),
-        if self.bookmark_rename_mode {
-            Print(format!("Renaming: {}_", self.bookmark_rename_input))
-        } else {
-            Print("Press letter for quick jump | Use arrows to navigate, Enter to go".to_string())
-        },
-        ResetColor
-    )?;
+            stdout,
+            MoveTo(2, 2),
+            SetForegroundColor(Color::Yellow),
+            if self.bookmark_rename_mode {
+                Print(format!("Renaming: {}_", self.bookmark_rename_input))
+            } else {
+                Print(
+                    "Press letter for quick jump | Use arrows to navigate, Enter to go".to_string(),
+                )
+            },
+            ResetColor
+        )?;
 
         // List bookmarks with selection highlight
         let bookmarks = self.bookmarks_manager.list_bookmarks();
-        for (i, bookmark) in bookmarks.iter().enumerate().take((terminal_height - 5) as usize) {
+        for (i, bookmark) in bookmarks
+            .iter()
+            .enumerate()
+            .take((terminal_height - 5) as usize)
+        {
             let row = 4 + i as u16;
             let is_selected = self.bookmark_selected_index == Some(i);
 
-            let shortcut_str = bookmark.shortcut
+            let shortcut_str = bookmark
+                .shortcut
                 .map(|c| format!("[{}]", c))
                 .unwrap_or_else(|| "   ".to_string());
 
@@ -505,78 +551,91 @@ impl Navigator {
             // Apply selection highlighting
             if is_selected {
                 execute!(
-                stdout,
-                MoveTo(0, row),
-                SetBackgroundColor(Color::DarkGreen),
-                SetForegroundColor(Color::White),
-                Print(" ".repeat(terminal_width as usize)),
-                MoveTo(0, row)
-            )?;
+                    stdout,
+                    MoveTo(0, row),
+                    SetBackgroundColor(Color::DarkGreen),
+                    SetForegroundColor(Color::White),
+                    Print(" ".repeat(terminal_width as usize)),
+                    MoveTo(0, row)
+                )?;
             }
 
             execute!(
-            stdout,
-            MoveTo(2, row),
-            if is_selected {
-                Print("> ")
-            } else {
-                Print("  ")
-            },
-            SetForegroundColor(if is_selected { Color::Yellow } else { Color::Cyan }),
-            Print(shortcut_str),
-            SetForegroundColor(if is_selected { Color::White } else { Color::White }),
-            Print(format!(" {:25} ", bookmark.name)),
-            SetForegroundColor(if is_selected { Color::Cyan } else { Color::Green }),
-            Print(format!("{:35} ", bookmark.path.display())),
-            SetForegroundColor(if is_selected { Color::White } else { Color::DarkGrey }),
-            Print(access_str),
-            ResetColor
-        )?;
+                stdout,
+                MoveTo(2, row),
+                if is_selected {
+                    Print("> ")
+                } else {
+                    Print("  ")
+                },
+                SetForegroundColor(if is_selected {
+                    Color::Yellow
+                } else {
+                    Color::Cyan
+                }),
+                Print(shortcut_str),
+                SetForegroundColor(Color::White),
+                Print(format!(" {:25} ", bookmark.name)),
+                SetForegroundColor(if is_selected {
+                    Color::Cyan
+                } else {
+                    Color::Green
+                }),
+                Print(format!("{:35} ", bookmark.path.display())),
+                SetForegroundColor(if is_selected {
+                    Color::White
+                } else {
+                    Color::DarkGrey
+                }),
+                Print(access_str),
+                ResetColor
+            )?;
         }
 
         // Available shortcuts
         let available = self.bookmarks_manager.get_available_shortcuts();
         if !available.is_empty() && !self.bookmark_rename_mode {
-            let avail_str = available.iter()
+            let avail_str = available
+                .iter()
                 .take(15)
                 .map(|c| c.to_string())
                 .collect::<Vec<_>>()
                 .join(" ");
 
             execute!(
-            stdout,
-            MoveTo(2, terminal_height - 3),
-            SetForegroundColor(Color::DarkGrey),
-            Print(format!("Available shortcuts: {}", avail_str)),
-            ResetColor
-        )?;
+                stdout,
+                MoveTo(2, terminal_height - 3),
+                SetForegroundColor(Color::DarkGrey),
+                Print(format!("Available shortcuts: {}", avail_str)),
+                ResetColor
+            )?;
         }
 
         // Show status message if any
         if let Some(ref msg) = self.status_message {
             execute!(
-            stdout,
-            MoveTo(2, terminal_height - 4),
-            SetForegroundColor(Color::Yellow),
-            Print(msg),
-            ResetColor
-        )?;
+                stdout,
+                MoveTo(2, terminal_height - 4),
+                SetForegroundColor(Color::Yellow),
+                Print(msg),
+                ResetColor
+            )?;
         }
 
         // Controls
         execute!(
-        stdout,
-        MoveTo(0, terminal_height - 1),
-        SetBackgroundColor(Color::DarkGrey),
-        SetForegroundColor(Color::White),
-        if self.bookmark_rename_mode {
-            Print(" Enter: Save | Esc: Cancel ")
-        } else {
-            Print(" ↑↓: Select | Enter: Go | [a-z]: Jump | Ctrl+A: Add | Ctrl+D: Delete | Ctrl+R: Rename | Esc: Back ")
-        },
-        Print(" ".repeat((terminal_width as usize).saturating_sub(90))),
-        ResetColor
-    )?;
+            stdout,
+            MoveTo(0, terminal_height - 1),
+            SetBackgroundColor(Color::DarkGrey),
+            SetForegroundColor(Color::White),
+            if self.bookmark_rename_mode {
+                Print(" Enter: Save | Esc: Cancel ")
+            } else {
+                Print(" ↑↓: Select | Enter: Go | [a-z]: Jump | Ctrl+A: Add | Ctrl+D: Delete | Ctrl+R: Rename | Esc: Back ")
+            },
+            Print(" ".repeat((terminal_width as usize).saturating_sub(90))),
+            ResetColor
+        )?;
 
         stdout.flush()?;
         Ok(())
@@ -669,7 +728,9 @@ impl Navigator {
                         KeyCode::Char('s') if self.is_root => {
                             self.mode = NavigatorMode::Select;
                         }
-                        KeyCode::Char('p') if self.is_root && !modifiers.contains(KeyModifiers::CONTROL) => {
+                        KeyCode::Char('p')
+                            if self.is_root && !modifiers.contains(KeyModifiers::CONTROL) =>
+                        {
                             self.mode = NavigatorMode::PatternSelect;
                             self.pattern_input.clear();
                         }
@@ -697,7 +758,7 @@ impl Navigator {
                         _ => {}
                     }
                 }
-            },
+            }
             NavigatorMode::Select => match code {
                 KeyCode::Up => self.move_selection_up(),
                 KeyCode::Down => self.move_selection_down(),
@@ -844,7 +905,11 @@ impl Navigator {
         Ok(None)
     }
 
-    fn handle_bookmarks_input(&mut self, code: KeyCode, modifiers: KeyModifiers) -> Result<Option<ExitAction>> {
+    fn handle_bookmarks_input(
+        &mut self,
+        code: KeyCode,
+        modifiers: KeyModifiers,
+    ) -> Result<Option<ExitAction>> {
         // Initialize bookmark selection if not set
         if self.bookmark_selected_index.is_none() {
             self.bookmark_selected_index = Some(0);
@@ -858,7 +923,10 @@ impl Navigator {
                 KeyCode::Enter => {
                     if let Some(idx) = self.bookmark_selected_index {
                         if !self.bookmark_rename_input.is_empty() {
-                            if let Err(e) = self.bookmarks_manager.rename_bookmark(idx, self.bookmark_rename_input.clone()) {
+                            if let Err(e) = self
+                                .bookmarks_manager
+                                .rename_bookmark(idx, self.bookmark_rename_input.clone())
+                            {
                                 self.status_message = Some(format!("Failed to rename: {}", e));
                             } else {
                                 self.status_message = Some("Bookmark renamed!".to_string());
@@ -911,7 +979,8 @@ impl Navigator {
             }
             // Ctrl+A to add bookmark
             KeyCode::Char('a') if modifiers.contains(KeyModifiers::CONTROL) => {
-                let name = self.current_dir
+                let name = self
+                    .current_dir
                     .file_name()
                     .and_then(|n| n.to_str())
                     .unwrap_or("Bookmark")
@@ -920,15 +989,18 @@ impl Navigator {
                 let available = self.bookmarks_manager.get_available_shortcuts();
                 let shortcut = available.first().copied();
 
-                if let Err(e) = self.bookmarks_manager.add_bookmark(
-                    name,
-                    self.current_dir.clone(),
-                    shortcut,
-                ) {
+                if let Err(e) =
+                    self.bookmarks_manager
+                        .add_bookmark(name, self.current_dir.clone(), shortcut)
+                {
                     self.status_message = Some(format!("Failed to add bookmark: {}", e));
                 } else {
-                    self.status_message = Some(format!("Bookmark added with shortcut '{}'!",
-                                                       shortcut.map(|c| c.to_string()).unwrap_or_else(|| "none".to_string())));
+                    self.status_message = Some(format!(
+                        "Bookmark added with shortcut '{}'!",
+                        shortcut
+                            .map(|c| c.to_string())
+                            .unwrap_or_else(|| "none".to_string())
+                    ));
                 }
             }
             // Ctrl+D to delete bookmark
@@ -954,7 +1026,9 @@ impl Navigator {
                 }
             }
             // Direct letter access to jump to bookmark
-            KeyCode::Char(c) if c.is_alphanumeric() && !modifiers.contains(KeyModifiers::CONTROL) => {
+            KeyCode::Char(c)
+                if c.is_alphanumeric() && !modifiers.contains(KeyModifiers::CONTROL) =>
+            {
                 if let Some(bookmark) = self.bookmarks_manager.get_bookmark_by_shortcut(c) {
                     let path = bookmark.path.clone();
                     self.load_directory(&path)?;
@@ -985,10 +1059,7 @@ impl Navigator {
             self.current_dir.clone()
         };
 
-        self.split_pane_view = Some(SplitPaneView::new(
-            self.current_dir.clone(),
-            second_path,
-        )?);
+        self.split_pane_view = Some(SplitPaneView::new(self.current_dir.clone(), second_path)?);
         self.mode = NavigatorMode::SplitPane;
         Ok(())
     }
@@ -1020,7 +1091,11 @@ impl Navigator {
         if let Some(ref search) = self.search_mode {
             if let Some(result) = search.get_current_result() {
                 // Find the entry in our list
-                if let Some(index) = self.entries.iter().position(|e| e.path == result.entry.path) {
+                if let Some(index) = self
+                    .entries
+                    .iter()
+                    .position(|e| e.path == result.entry.path)
+                {
                     self.selected_index = index;
                     self.adjust_scroll();
                 }

@@ -17,7 +17,9 @@ pub struct SearchMode {
 #[derive(Debug, Clone)]
 pub struct SearchResult {
     pub entry: FileEntry,
+    #[allow(dead_code)]
     pub match_context: Option<String>,
+    #[allow(dead_code)]
     pub line_number: Option<usize>,
 }
 
@@ -61,7 +63,10 @@ impl SearchMode {
             } else if self.case_sensitive {
                 entry.name.contains(&self.query)
             } else {
-                entry.name.to_lowercase().contains(&self.query.to_lowercase())
+                entry
+                    .name
+                    .to_lowercase()
+                    .contains(&self.query.to_lowercase())
             };
 
             if matches {
@@ -89,7 +94,11 @@ impl SearchMode {
         Ok(())
     }
 
-    fn search_in_file(&self, path: &Path, regex: &Option<Regex>) -> Result<Option<Vec<(usize, String)>>> {
+    fn search_in_file(
+        &self,
+        path: &Path,
+        regex: &Option<Regex>,
+    ) -> Result<Option<Vec<(usize, String)>>> {
         use std::fs::File;
         use std::io::{BufRead, BufReader};
 
@@ -116,7 +125,9 @@ impl SearchMode {
                 } else if self.case_sensitive {
                     line_content.contains(&self.query)
                 } else {
-                    line_content.to_lowercase().contains(&self.query.to_lowercase())
+                    line_content
+                        .to_lowercase()
+                        .contains(&self.query.to_lowercase())
                 };
 
                 if matches {
@@ -136,7 +147,11 @@ impl SearchMode {
             }
         }
 
-        Ok(if results.is_empty() { None } else { Some(results) })
+        Ok(if results.is_empty() {
+            None
+        } else {
+            Some(results)
+        })
     }
 
     fn is_text_file(&self, path: &Path) -> bool {
@@ -145,14 +160,38 @@ impl SearchMode {
             let ext = ext.to_string_lossy().to_lowercase();
             matches!(
                 ext.as_str(),
-                "txt" | "md" | "rs" | "toml" | "yaml" | "yml" | "json" |
-                "js" | "ts" | "py" | "sh" | "bash" | "c" | "cpp" | "h" |
-                "hpp" | "java" | "go" | "rb" | "php" | "html" | "css" |
-                "xml" | "conf" | "cfg" | "ini" | "log"
+                "txt"
+                    | "md"
+                    | "rs"
+                    | "toml"
+                    | "yaml"
+                    | "yml"
+                    | "json"
+                    | "js"
+                    | "ts"
+                    | "py"
+                    | "sh"
+                    | "bash"
+                    | "c"
+                    | "cpp"
+                    | "h"
+                    | "hpp"
+                    | "java"
+                    | "go"
+                    | "rb"
+                    | "php"
+                    | "html"
+                    | "css"
+                    | "xml"
+                    | "conf"
+                    | "cfg"
+                    | "ini"
+                    | "log"
             )
         } else {
             // Check files without extension (like README, LICENSE)
-            let filename = path.file_name()
+            let filename = path
+                .file_name()
                 .and_then(|n| n.to_str())
                 .unwrap_or("")
                 .to_lowercase();
@@ -201,6 +240,7 @@ impl SearchMode {
         self.results.get(self.current_result_index)
     }
 
+    #[allow(dead_code)]
     pub fn clear(&mut self) {
         self.query.clear();
         self.results.clear();
@@ -265,20 +305,18 @@ mod tests {
         search.query = "TEST".to_string();
         search.case_sensitive = false;
 
-        let entries = vec![
-            FileEntry {
-                name: "test.txt".to_string(),
-                path: PathBuf::from("/test.txt"),
-                is_dir: false,
-                is_accessible: true,
-                is_symlink: false,
-                permissions: None,
-                owner: None,
-                group: None,
-                uid: None,
-                gid: None,
-            },
-        ];
+        let entries = vec![FileEntry {
+            name: "test.txt".to_string(),
+            path: PathBuf::from("/test.txt"),
+            is_dir: false,
+            is_accessible: true,
+            is_symlink: false,
+            permissions: None,
+            owner: None,
+            group: None,
+            uid: None,
+            gid: None,
+        }];
 
         let _ = search.search(&entries, Path::new("/"));
         assert_eq!(search.results.len(), 1);

@@ -119,7 +119,11 @@ impl Renderer {
                         search.query,
                         if search.use_regex { "ON" } else { "OFF" },
                         if search.case_sensitive { "ON" } else { "OFF" },
-                        if search.search_in_contents { "ON" } else { "OFF" }
+                        if search.search_in_contents {
+                            "ON"
+                        } else {
+                            "OFF"
+                        }
                     )
                 } else {
                     "SEARCH: _".to_string()
@@ -295,5 +299,4 @@ impl Renderer {
 
         Ok(())
     }
-
 }
