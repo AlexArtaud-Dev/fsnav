@@ -488,7 +488,8 @@ impl SplitPaneView {
     }
 
     fn render_status_bar(&self, stdout: &mut io::Stdout, width: u16, height: u16) -> Result<()> {
-        let status = " Tab: Switch Pane | F5: Sync Dirs | F6: Toggle Layout | +/-: Adjust Split | q: Quit";
+        let status =
+            " Tab: Switch Pane | F5: Sync Dirs | F6: Toggle Layout | +/-: Adjust Split | q: Quit";
 
         execute!(
             stdout,
