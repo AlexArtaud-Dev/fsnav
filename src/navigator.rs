@@ -1,7 +1,7 @@
 use crate::bookmarks::BookmarksManager;
 use crate::managers::{ChmodInterface, ChownInterface};
 use crate::models::{ExitAction, FileEntry};
-use crate::preview::FilePreview;
+use crate::preview::{FilePreview, PreviewContent};
 use crate::search::SearchMode;
 use crate::split_pane::SplitPaneView;
 use crate::ui::{RenderContext, Renderer};
@@ -9,7 +9,10 @@ use crate::utils::{get_owner_group, is_root_user, match_pattern};
 use anyhow::{Context, Result};
 use crossterm::style::SetBackgroundColor;
 use crossterm::{
+    cursor::MoveTo,
     event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers},
+    execute,
+    style::{Color, Print, ResetColor, SetForegroundColor},
     terminal,
 };
 use std::{
@@ -170,11 +173,6 @@ impl Navigator {
     }
 
     fn render_with_preview(&mut self) -> Result<()> {
-        use crossterm::{
-            cursor::MoveTo,
-            execute,
-            style::{Color, Print, ResetColor, SetForegroundColor},
-        };
         use std::io::{self, Write};
 
         let mut stdout = io::stdout();
@@ -279,13 +277,6 @@ impl Navigator {
         width: u16,
         height: u16,
     ) -> Result<()> {
-        use crate::preview::{FilePreview, PreviewContent};
-        use crossterm::{
-            cursor::MoveTo,
-            execute,
-            style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
-        };
-
         if let Some(ref preview) = self.file_preview {
             // Header with file info
             execute!(
@@ -492,12 +483,6 @@ impl Navigator {
     }
 
     fn render_bookmarks_interface(&self) -> Result<()> {
-        use crossterm::{
-            cursor::MoveTo,
-            execute,
-            style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
-            terminal,
-        };
         use std::io::{self, Write};
 
         let mut stdout = io::stdout();
